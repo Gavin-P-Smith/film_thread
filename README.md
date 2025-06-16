@@ -1,16 +1,17 @@
-# my_first_app
+# film_thread
 
-A new Flutter project.
+A smart Flutter app that listens to what's playing on your TV and overlays IMDb-style metadata using services like TMDb, ACRCloud, and more.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+This project is built using the Flutter framework.
 
-A few resources to get you started if this is your first Flutter project:
+### Resources
+- [Flutter: Write your first app](https://docs.flutter.dev/get-started/codelab)
+- [Flutter Cookbook](https://docs.flutter.dev/cookbook)
+- [Flutter API Reference](https://api.flutter.dev/)
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Vision
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Think of it as “Shazam for TV” — your second screen companion to enhance your viewing experience.
+
