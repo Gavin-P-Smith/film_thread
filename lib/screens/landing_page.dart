@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'result_page.dart'; // Add this import
+import 'movie_page.dart'; // ✅ Import the unified MoviePage
 
 class LandingPage extends StatelessWidget {
   const LandingPage({super.key});
@@ -25,11 +25,12 @@ class LandingPage extends StatelessWidget {
                   IconButton(
                     icon: const Icon(Icons.mic),
                     onPressed: () {
-                      // Simulate listening and navigate
+                      // Simulate a movie match — hardcoded TMDb movie ID
+                      const int fakeMovieId = 24428; // Example: The Avengers
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const ResultPage(),
+                          builder: (_) => MoviePage(movieId: fakeMovieId),
                         ),
                       );
                     },
@@ -37,18 +38,26 @@ class LandingPage extends StatelessWidget {
                 ],
               ),
             ),
-            // (Scroll content remains unchanged...)
-            Expanded(
+            const Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text('News Section (Coming Soon)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                  children: [
+                    Text(
+                      'News Section (Coming Soon)',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
                     SizedBox(height: 20),
-                    Text('Social Media Feed (Coming Soon)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                    Text(
+                      'Social Media Feed (Coming Soon)',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
                     SizedBox(height: 20),
-                    Text('Actor of the Day (Coming Soon)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                    Text(
+                      'Actor of the Day (Coming Soon)',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    ),
                   ],
                 ),
               ),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/landing_page.dart'; // <- important: must match your file
+import 'screens/landing_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const LandingPage(), // <- this must say LandingPage()
+      home: const LandingPage(),
     );
   }
 }
