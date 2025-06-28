@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class TMDbService {
-  static const String _apiKey = '38f9ac0f23b36b7c64990e9711335610'; // Replace with your key
+  static const String _apiKey = '38f9ac0f23b36b7c64990e9711335610';
   static const String _baseUrl = 'https://api.themoviedb.org/3';
 
   static Future<Map<String, dynamic>?> getMovieDetails(int movieId) async {
@@ -44,6 +44,11 @@ class TMDbService {
         : null;
   }
 
+  static Future<Map<String, dynamic>?> getActorDetails(int personId) async {
+    final url = Uri.parse('$_baseUrl/person/$personId?api_key=$_apiKey');
+    return _getJson(url);
+  }
+
   static Future<List<dynamic>> getFilmography(int personId) async {
     final url = Uri.parse('$_baseUrl/person/$personId/movie_credits?api_key=$_apiKey');
     final data = await _getJson(url);
@@ -62,5 +67,30 @@ class TMDbService {
       }
     } catch (_) {}
     return null;
+  }
+
+  static String? genreName(int id) {
+    const genreMap = {
+      28: 'Action',
+      12: 'Adventure',
+      16: 'Animation',
+      35: 'Comedy',
+      80: 'Crime',
+      99: 'Documentary',
+      18: 'Drama',
+      10751: 'Family',
+      14: 'Fantasy',
+      36: 'History',
+      27: 'Horror',
+      10402: 'Music',
+      9648: 'Mystery',
+      10749: 'Romance',
+      878: 'Science Fiction',
+      10770: 'TV Movie',
+      53: 'Thriller',
+      10752: 'War',
+      37: 'Western',
+    };
+    return genreMap[id];
   }
 }

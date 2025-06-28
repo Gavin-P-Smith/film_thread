@@ -90,9 +90,17 @@ class _MoviePageState extends State<MoviePage> {
     final crew = credits?['crew'] ?? [];
     final filtered = crew.where((c) => c['job'] == job).toList();
     if (filtered.isEmpty) return const SizedBox.shrink();
-    return Text(
-      "$job: ${filtered.map((c) => c['name']).join(', ')}",
-      style: const TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: RichText(
+        text: TextSpan(
+          style: const TextStyle(color: Colors.black),
+          children: [
+            TextSpan(text: "$job: ", style: const TextStyle(fontWeight: FontWeight.bold)),
+            TextSpan(text: filtered.map((c) => c['name']).join(', '))
+          ],
+        ),
+      ),
     );
   }
 
@@ -119,29 +127,49 @@ class _MoviePageState extends State<MoviePage> {
           children: [
             if (posterUrl != null)
               Center(
-                child: Image.network(posterUrl, height: 300),
+                child: Container(
+                  decoration: BoxDecoration(
+                    boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)],
+                  ),
+                  child: Image.network(posterUrl, height: 300),
+                ),
               ),
             const SizedBox(height: 16),
-            Text(
-              '${movie!['title']} (${movie!['release_date']?.toString().substring(0, 4) ?? 'N/A'})',
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            Center(
+              child: Text(
+                '${movie!['title']} (${movie!['release_date']?.toString().substring(0, 4) ?? 'N/A'})',
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
             ),
             const SizedBox(height: 8),
-            Text(
-              movie!['genres'] != null
-                  ? (movie!['genres'] as List).map((g) => g['name']).join(', ')
-                  : 'No genre info',
-              style: const TextStyle(color: Colors.grey),
+            Wrap(
+              spacing: 8,
+              children: (movie!['genres'] as List?)?.map((g) => Chip(label: Text(g['name']))).toList() ?? [Text('No genre info')],
             ),
             const SizedBox(height: 8),
-            Text(
-              'Runtime: ${movie!['runtime']} min | Certification: ${getCertification()}',
-              style: const TextStyle(fontSize: 14),
+            Row(
+              children: [
+                const Icon(Icons.schedule, size: 18),
+                const SizedBox(width: 4),
+                Text('${movie!['runtime']} min'),
+                const SizedBox(width: 16),
+                const Icon(Icons.warning, size: 18),
+                const SizedBox(width: 4),
+                Text(getCertification()),
+              ],
             ),
             const SizedBox(height: 16),
-            Text(
-              movie!['overview'] ?? 'No summary available.',
-              style: const TextStyle(fontSize: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                movie!['overview'] ?? 'No summary available.',
+                style: const TextStyle(fontSize: 16),
+                textAlign: TextAlign.justify,
+              ),
             ),
             const SizedBox(height: 16),
             buildCrewList('Director'),
@@ -150,66 +178,111 @@ class _MoviePageState extends State<MoviePage> {
             const SizedBox(height: 20),
             const Text('Cast', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Column(
-              children: (credits?['cast'] ?? [])
-                  .take(10)
-                  .map<Widget>(
-                    (actor) => ListTile(
-                      leading: actor['profile_path'] != null
-                          ? CircleAvatar(
-                              backgroundImage: NetworkImage(
-                                TMDbService.getImageUrl(actor['profile_path']),
-                              ),
-                            )
-                          : const CircleAvatar(child: Icon(Icons.person)),
-                      title: Text(actor['name']),
-                      subtitle: Text('as ${actor['character']}'),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ActorPage(actorName: actor['name']),
+            SizedBox(
+              height: 160,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: (credits?['cast'] ?? []).length.clamp(0, 10),
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (_, index) {
+                  final actor = credits!['cast'][index];
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ActorPage(actorName: actor['name']),
+                        ),
+                      );
+                    },
+                    child: Column(
+                      children: [
+                        CircleAvatar(
+                          radius: 40,
+                          backgroundImage: actor['profile_path'] != null
+                              ? NetworkImage(TMDbService.getImageUrl(actor['profile_path']))
+                              : null,
+                          child: actor['profile_path'] == null ? const Icon(Icons.person) : null,
+                        ),
+                        const SizedBox(height: 4),
+                        SizedBox(
+                          width: 80,
+                          child: Text(
+                            actor['name'],
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
                           ),
-                        );
-                      },
+                        ),
+                      ],
                     ),
-                  )
-                  .toList(),
+                  );
+                },
+              ),
             ),
             const SizedBox(height: 20),
             if (trailerKey != null)
-              TextButton.icon(
-                icon: const Icon(Icons.play_circle_fill),
-                label: const Text('Watch Trailer'),
-                onPressed: () => _launchYouTubeTrailer(trailerKey),
+              Center(
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    textStyle: const TextStyle(fontSize: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  ),
+                  icon: const Icon(Icons.play_arrow),
+                  label: const Text('Watch Trailer'),
+                  onPressed: () => _launchYouTubeTrailer(trailerKey),
+                ),
               ),
             const SizedBox(height: 20),
             const Text('Similar Movies', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Column(
-              children: (similar?['results'] ?? [])
-                  .take(5)
-                  .map<Widget>(
-                    (movie) => ListTile(
-                      leading: movie['poster_path'] != null
-                          ? Image.network(
-                              TMDbService.getImageUrl(movie['poster_path']),
-                              width: 50,
-                            )
-                          : const Icon(Icons.movie),
-                      title: Text(movie['title']),
-                      subtitle: Text(movie['release_date']?.toString().substring(0, 4) ?? ''),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => MoviePage(movieId: movie['id']),
+            SizedBox(
+              height: 250,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: (similar?['results'] ?? []).length.clamp(0, 10),
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (_, index) {
+                  final sm = similar!['results'][index];
+                  return InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => MoviePage(movieId: sm['id']),
+                        ),
+                      );
+                    },
+                    child: Column(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: sm['poster_path'] != null
+                              ? Image.network(
+                                  TMDbService.getImageUrl(sm['poster_path']),
+                                  height: 180,
+                                )
+                              : Container(
+                                  height: 180,
+                                  width: 120,
+                                  color: Colors.grey,
+                                  child: const Icon(Icons.movie, size: 48),
+                                ),
+                        ),
+                        const SizedBox(height: 6),
+                        SizedBox(
+                          width: 100,
+                          child: Text(
+                            sm['title'],
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
                           ),
-                        );
-                      },
+                        )
+                      ],
                     ),
-                  )
-                  .toList(),
+                  );
+                },
+              ),
             ),
           ],
         ),
