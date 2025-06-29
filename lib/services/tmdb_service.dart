@@ -5,6 +5,38 @@ class TMDbService {
   static const String _apiKey = '38f9ac0f23b36b7c64990e9711335610';
   static const String _baseUrl = 'https://api.themoviedb.org/3';
 
+  static Future<Map<String, dynamic>?> getTvDetails(int tvId) async {
+  final url = Uri.parse('$_baseUrl/tv/$tvId?api_key=$_apiKey');
+  return _getJson(url);
+}
+
+static Future<Map<String, dynamic>?> getEpisodeDetails({
+  required int tvId,
+  required int seasonNumber,
+  required int episodeNumber,
+}) async {
+  final url = Uri.parse(
+    '$_baseUrl/tv/$tvId/season/$seasonNumber/episode/$episodeNumber?api_key=$_apiKey',
+  );
+  return _getJson(url);
+}
+static Future<List<dynamic>> searchMulti(String query) async {
+  final encoded = Uri.encodeQueryComponent(query);
+  final url = Uri.parse('$_baseUrl/search/multi?api_key=$_apiKey&query=$encoded');
+  final data = await _getJson(url);
+  return data?['results'] ?? [];
+}
+static Future<Map<String, dynamic>?> getTvCredits(int tvId) async {
+  final url = Uri.parse('$_baseUrl/tv/$tvId/credits?api_key=$_apiKey');
+  return _getJson(url);
+}
+
+  static Future<List<dynamic>> getTvFilmography(int personId) async {
+  final url = Uri.parse('$_baseUrl/person/$personId/tv_credits?api_key=$_apiKey');
+  final data = await _getJson(url);
+  return data?['cast'] ?? [];
+}
+
   static Future<Map<String, dynamic>?> getMovieDetails(int movieId) async {
     final url = Uri.parse('$_baseUrl/movie/$movieId?api_key=$_apiKey');
     return _getJson(url);
@@ -59,6 +91,11 @@ class TMDbService {
     return 'https://image.tmdb.org/t/p/w$size$path';
   }
 
+  static Future<Map<String, dynamic>?> getSeasonDetails(int tvId, int seasonNumber) async {
+  final url = Uri.parse('$_baseUrl/tv/$tvId/season/$seasonNumber?api_key=$_apiKey');
+  return _getJson(url);
+}
+
   static Future<Map<String, dynamic>?> _getJson(Uri url) async {
     try {
       final response = await http.get(url);
@@ -67,30 +104,5 @@ class TMDbService {
       }
     } catch (_) {}
     return null;
-  }
-
-  static String? genreName(int id) {
-    const genreMap = {
-      28: 'Action',
-      12: 'Adventure',
-      16: 'Animation',
-      35: 'Comedy',
-      80: 'Crime',
-      99: 'Documentary',
-      18: 'Drama',
-      10751: 'Family',
-      14: 'Fantasy',
-      36: 'History',
-      27: 'Horror',
-      10402: 'Music',
-      9648: 'Mystery',
-      10749: 'Romance',
-      878: 'Science Fiction',
-      10770: 'TV Movie',
-      53: 'Thriller',
-      10752: 'War',
-      37: 'Western',
-    };
-    return genreMap[id];
   }
 }

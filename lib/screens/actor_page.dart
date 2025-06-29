@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/tmdb_service.dart';
-import 'movie_page.dart';
+import 'media_page.dart';
 
 class ActorPage extends StatefulWidget {
   final String actorName;
@@ -16,9 +16,6 @@ class _ActorPageState extends State<ActorPage> {
   List<dynamic> filmography = [];
   Map<String, List<dynamic>> groupedByDecade = {};
   Set<String> expandedDecades = {};
-  String? selectedGenre;
-  List<String> topGenres = [];
-
   bool isLoading = true;
   bool isBioExpanded = false;
 
@@ -37,57 +34,47 @@ class _ActorPageState extends State<ActorPage> {
 
     final personId = result['id'];
     final details = await TMDbService.getActorDetails(personId);
-    final credits = await TMDbService.getFilmography(personId);
+    final movieCredits = await TMDbService.getFilmography(personId);
+    final tvCredits = await TMDbService.getTvFilmography(personId);
 
-    final sorted = [...credits]
-      ..sort((a, b) => (b['release_date'] ?? '').compareTo(a['release_date'] ?? ''));
-
-    final genreMap = <String, int>{};
-    for (var movie in sorted) {
-      for (var genre in movie['genre_ids'] ?? []) {
-        final name = TMDbService.genreName(genre);
-        if (name != null) genreMap[name] = (genreMap[name] ?? 0) + 1;
-      }
+    for (var m in movieCredits) {
+      m['media_type'] = 'movie';
+    }
+    for (var t in tvCredits) {
+      t['media_type'] = 'tv';
     }
 
-    final genreEntries = genreMap.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    topGenres = genreEntries.take(5).map((e) => e.key).toList();
+    final combined = [...movieCredits, ...tvCredits]
+      ..sort((a, b) =>
+          (b['release_date'] ?? b['first_air_date'] ?? '')
+              .compareTo(a['release_date'] ?? a['first_air_date'] ?? ''));
 
-    groupedByDecade = _groupByDecade(sorted);
+    groupedByDecade = _groupByDecade(combined);
     if (groupedByDecade.isNotEmpty) {
       expandedDecades.add(groupedByDecade.keys.first);
     }
 
     setState(() {
       actorData = details;
-      filmography = sorted;
+      filmography = combined;
       isLoading = false;
     });
   }
 
   Map<String, List<dynamic>> _groupByDecade(List<dynamic> credits) {
     final Map<String, List<dynamic>> grouped = {};
-    for (var movie in credits) {
-      final date = movie['release_date'];
+    for (var entry in credits) {
+      final date = entry['release_date'] ?? entry['first_air_date'];
       if (date == null || date.isEmpty) continue;
       final year = int.tryParse(date.substring(0, 4));
       if (year == null) continue;
       final decade = '${(year ~/ 10) * 10}s';
-      grouped.putIfAbsent(decade, () => []).add(movie);
+      grouped.putIfAbsent(decade, () => []).add(entry);
     }
 
     final sorted = grouped.entries.toList()
       ..sort((a, b) => b.key.compareTo(a.key));
     return Map.fromEntries(sorted);
-  }
-
-  List<dynamic> _filterByGenre(List<dynamic> movies) {
-    if (selectedGenre == null) return movies;
-    return movies.where((m) {
-      final ids = m['genre_ids'] ?? [];
-      return ids.any((id) => TMDbService.genreName(id) == selectedGenre);
-    }).toList();
   }
 
   Widget _buildHeader() {
@@ -147,28 +134,11 @@ class _ActorPageState extends State<ActorPage> {
     );
   }
 
-  Widget _buildGenres() {
-    if (topGenres.isEmpty) return const SizedBox.shrink();
-
-    return Wrap(
-      spacing: 8,
-      children: topGenres.map((genre) {
-        return FilterChip(
-          label: Text(genre),
-          selected: selectedGenre == genre,
-          onSelected: (val) => setState(() {
-            selectedGenre = val ? genre : null;
-          }),
-        );
-      }).toList(),
-    );
-  }
-
   Widget _buildFilmography() {
     return ListView(
       children: groupedByDecade.entries.map((entry) {
         final decade = entry.key;
-        final movies = _filterByGenre(entry.value);
+        final movies = entry.value;
         final isExpanded = expandedDecades.contains(decade);
 
         return Column(
@@ -186,21 +156,30 @@ class _ActorPageState extends State<ActorPage> {
               },
             ),
             if (isExpanded)
-              ...movies.map((movie) => ListTile(
-                    leading: movie['poster_path'] != null
+              ...movies.map((item) => ListTile(
+                    leading: item['poster_path'] != null
                         ? Image.network(
-                            TMDbService.getImageUrl(movie['poster_path']),
+                            TMDbService.getImageUrl(item['poster_path']),
                             width: 50,
                           )
                         : const Icon(Icons.movie),
-                    title: Text(movie['title']),
-                    subtitle: Text(movie['release_date']?.toString().substring(0, 4) ?? ''),
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => MoviePage(movieId: movie['id']),
-                      ),
+                    title: Text(item['title'] ?? item['name']),
+                    subtitle: Text(
+                      (item['release_date'] ?? item['first_air_date'] ?? '')
+                          .toString()
+                          .substring(0, 4),
                     ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => MediaPage(
+                            id: item['id'],
+                            mediaType: item['media_type'] ?? 'movie',
+                          ),
+                        ),
+                      );
+                    },
                   )),
           ],
         );
@@ -223,8 +202,6 @@ class _ActorPageState extends State<ActorPage> {
           children: [
             if (actorData != null) _buildHeader(),
             const SizedBox(height: 16),
-            _buildGenres(),
-            const SizedBox(height: 12),
             Expanded(child: _buildFilmography()),
           ],
         ),

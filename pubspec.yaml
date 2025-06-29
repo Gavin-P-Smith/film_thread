@@ -10,8 +10,9 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  http: ^1.4.0
+  http: ^1.4.0           # ✅ keep only the latest version
   url_launcher: ^6.2.6
+  xml: ^6.3.0            # ✅ required for TMZ RSS parsing
 
 dev_dependencies:
   flutter_test:
