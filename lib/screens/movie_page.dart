@@ -128,7 +128,7 @@ class _MoviePageState extends State<MoviePage> {
             if (posterUrl != null)
               Center(
                 child: Container(
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)],
                   ),
                   child: Image.network(posterUrl, height: 300),
@@ -144,7 +144,7 @@ class _MoviePageState extends State<MoviePage> {
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
-              children: (movie!['genres'] as List?)?.map((g) => Chip(label: Text(g['name']))).toList() ?? [Text('No genre info')],
+              children: (movie!['genres'] as List?)?.map((g) => Chip(label: Text(g['name']))).toList() ?? [const Text('No genre info')],
             ),
             const SizedBox(height: 8),
             Row(

@@ -254,14 +254,14 @@ class _LandingPageState extends State<LandingPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => MediaPage(id: 1399, mediaType: 'tv'),
+              builder: (_) => const MediaPage(id: 1399, mediaType: 'tv'),
             ),
           );
         } else {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => MediaPage(id: 24428, mediaType: 'movie'),
+              builder: (_) => const MediaPage(id: 24428, mediaType: 'movie'),
             ),
           );
         }
