@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
         colorScheme: const ColorScheme.dark(
           primary: Color(0xFF2196F3),
           secondary: Color(0xFF9C27B0),
-          background: Colors.black,
+          surface: Colors.black,
         ),
         textTheme: const TextTheme(
           headlineLarge: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: Colors.white),

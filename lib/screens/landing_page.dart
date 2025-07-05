@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/tmdb_service.dart';
-import '../services/tmz_news_service.dart';
+import '../services/variety_news_service.dart';
 import 'media_page.dart';
 import 'actor_page.dart';
 import '../widgets/unified_app_bar.dart';
@@ -30,7 +30,7 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   Future<void> _loadNews() async {
-    final items = await TMZNewsService.fetchFilteredArticles();
+    final items = await VarietyNewsService.fetchFilteredArticles();
     setState(() {
       news = items;
       loadingNews = false;
@@ -75,7 +75,7 @@ class _LandingPageState extends State<LandingPage> {
                   onTap: () => showModalBottomSheet(
                     context: context,
                     isScrollControlled: true,
-                    backgroundColor: colorScheme.background,
+                    backgroundColor: colorScheme.surface,
                     shape: const RoundedRectangleBorder(
                       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
                     ),

@@ -132,7 +132,7 @@ class _MoviePageState extends State<MoviePage> {
               children: [
                 if (posterUrl != null)
                   Container(
-                    decoration: BoxDecoration(boxShadow: [
+                    decoration: const BoxDecoration(boxShadow: [
                       BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(2, 4))
                     ]),
                     child: Image.network(posterUrl, height: 250),

@@ -46,7 +46,7 @@ class _UnifiedAppBarState extends State<UnifiedAppBar> {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return AppBar(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       elevation: 0,
       systemOverlayStyle: SystemUiOverlayStyle.light,
       automaticallyImplyLeading: false,
