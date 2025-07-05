@@ -43,7 +43,6 @@ class _UnifiedAppBarState extends State<UnifiedAppBar> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final screenWidth = MediaQuery.of(context).size.width;
 
     return AppBar(
       backgroundColor: theme.colorScheme.surface,
@@ -75,7 +74,9 @@ class _UnifiedAppBarState extends State<UnifiedAppBar> {
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surface,
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: theme.colorScheme.outline.withOpacity(0.3)),
+                  border: Border.all(
+                    color: theme.colorScheme.outline.withAlpha((0.3 * 255).round()),
+                  ),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(

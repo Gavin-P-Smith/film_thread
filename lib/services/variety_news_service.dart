@@ -14,18 +14,18 @@ class VarietyNewsService {
     final unescape = HtmlUnescape();
 
     return items.map((item) {
-      final titleRaw = item.getElement('title')?.text ?? '';
-      final descriptionRaw = item.getElement('description')?.text ?? '';
-      final link = item.getElement('link')?.text ?? '';
-      final pubDate = item.getElement('pubDate')?.text ?? '';
+      final titleRaw = item.getElement('title')?.value ?? '';
+      final link = item.getElement('link')?.innerText.trim() ?? '';
+      final descriptionRaw = item.getElement('description')?.innerText ?? '';
+      final pubDate = item.getElement('pubDate')?.value ?? '';
 
-      // Unescape HTML entities
+      // Unescape and clean up
       final title = unescape.convert(titleRaw);
       final description = unescape.convert(
         descriptionRaw.replaceAll(RegExp(r'<[^>]*>'), '').trim(),
       );
 
-      // Extract image if available from media:content
+      // Extract image if available
       final media = item.findAllElements('media:content').firstWhere(
         (el) {
           final url = el.getAttribute('url') ?? '';

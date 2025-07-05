@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../services/tmdb_service.dart';
 import '../services/variety_news_service.dart';
 import 'media_page.dart';
-import 'actor_page.dart';
 import '../widgets/unified_app_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
