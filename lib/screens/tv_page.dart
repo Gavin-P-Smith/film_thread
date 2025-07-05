@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/tmdb_service.dart';
 import 'actor_page.dart';
-import 'episode_page.dart';
+import '../widgets/unified_app_bar.dart';
 
 class TvPage extends StatefulWidget {
   final int tvId;
-
   const TvPage({super.key, required this.tvId});
 
   @override
@@ -19,10 +18,8 @@ class _TvPageState extends State<TvPage> {
   Map<String, dynamic>? videos;
   Map<String, dynamic>? externalIds;
   Map<String, dynamic>? similar;
-
   Map<int, Map<String, dynamic>> seasonDetails = {};
   Set<int> expandedSeasons = {};
-
   bool isLoading = true;
 
   @override
@@ -48,63 +45,56 @@ class _TvPageState extends State<TvPage> {
     });
   }
 
-  Widget _buildMetadata() {
+  Widget _buildHeader(TextTheme textTheme) {
     final genres = tv?['genres']?.map((g) => g['name'])?.join(', ') ?? '';
     final date = tv?['first_air_date']?.toString().substring(0, 4) ?? '';
+    final poster = tv?['poster_path'] != null
+        ? TMDbService.getImageUrl(tv!['poster_path'], size: 300)
+        : null;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          tv?['name'] ?? 'Unknown',
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-        ),
-        if (genres.isNotEmpty || date.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              '$genres • $date',
-              style: const TextStyle(color: Colors.grey),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildPosterAndOverview() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (tv?['poster_path'] != null)
-          Image.network(
-            TMDbService.getImageUrl(tv!['poster_path'], size: 300),
-            height: 180,
-          ),
+        if (poster != null)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(poster, height: 180),
+          )
+        else
+          const Icon(Icons.tv, size: 180),
         const SizedBox(width: 16),
         Expanded(
-          child: Text(
-            tv?['overview'] ?? 'No overview available.',
-            textAlign: TextAlign.justify,
-            style: const TextStyle(fontSize: 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(tv?['name'] ?? 'Unknown', style: textTheme.headlineLarge),
+              const SizedBox(height: 4),
+              if (genres.isNotEmpty || date.isNotEmpty)
+                Text('$genres • $date', style: textTheme.bodyMedium),
+              const SizedBox(height: 12),
+              Text(
+                tv?['overview'] ?? 'No overview available.',
+                textAlign: TextAlign.justify,
+                style: textTheme.bodyMedium,
+              ),
+            ],
           ),
         ),
       ],
     );
   }
 
-  Widget _buildCastList() {
+  Widget _buildCastList(TextTheme textTheme) {
     final cast = credits?['cast'] ?? [];
-
     if (cast.isEmpty) return const SizedBox();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 16),
-        const Text('Cast', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 20),
+        Text('Cast', style: textTheme.titleLarge),
         const SizedBox(height: 8),
         SizedBox(
-          height: 120,
+          height: 140,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: cast.length,
@@ -121,22 +111,20 @@ class _TvPageState extends State<TvPage> {
                 child: Column(
                   children: [
                     CircleAvatar(
+                      radius: 40,
                       backgroundImage: actor['profile_path'] != null
                           ? NetworkImage(TMDbService.getImageUrl(actor['profile_path']))
                           : null,
-                      radius: 30,
-                      child: actor['profile_path'] == null
-                          ? const Icon(Icons.person)
-                          : null,
+                      child: actor['profile_path'] == null ? const Icon(Icons.person) : null,
                     ),
                     const SizedBox(height: 4),
                     SizedBox(
-                      width: 60,
+                      width: 80,
                       child: Text(
                         actor['name'],
-                        style: const TextStyle(fontSize: 12),
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
+                        style: textTheme.bodySmall,
                       ),
                     ),
                   ],
@@ -149,18 +137,19 @@ class _TvPageState extends State<TvPage> {
     );
   }
 
-  Widget _buildTrailerButton() {
+  Widget _buildTrailerButton(ColorScheme colorScheme) {
     final ytVideo = (videos?['results'] ?? [])
         .firstWhere((v) => v['site'] == 'YouTube' && v['type'] == 'Trailer', orElse: () => null);
     if (ytVideo == null) return const SizedBox();
 
     final url = 'https://www.youtube.com/watch?v=${ytVideo['key']}';
     return Padding(
-      padding: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.symmetric(vertical: 20),
       child: Center(
-        child: ElevatedButton.icon(
+        child: FilledButton.icon(
           icon: const Icon(Icons.play_arrow),
           label: const Text('Watch Trailer'),
+          style: FilledButton.styleFrom(backgroundColor: colorScheme.primary),
           onPressed: () async {
             if (await canLaunchUrl(Uri.parse(url))) {
               await launchUrl(Uri.parse(url));
@@ -171,23 +160,7 @@ class _TvPageState extends State<TvPage> {
     );
   }
 
-  Widget _buildExternalLinks() {
-    final imdbId = externalIds?['imdb_id'];
-    if (imdbId == null) return const SizedBox();
-
-    return TextButton.icon(
-      onPressed: () async {
-        final url = 'https://www.imdb.com/title/$imdbId';
-        if (await canLaunchUrl(Uri.parse(url))) {
-          await launchUrl(Uri.parse(url));
-        }
-      },
-      icon: const Icon(Icons.open_in_new),
-      label: const Text('View on IMDb'),
-    );
-  }
-
-  Widget _buildSimilarShows() {
+  Widget _buildSimilarShows(TextTheme textTheme) {
     final results = similar?['results'] ?? [];
     if (results.isEmpty) return const SizedBox();
 
@@ -195,22 +168,20 @@ class _TvPageState extends State<TvPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 16),
-        const Text('Similar Shows', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text('Similar Shows', style: textTheme.titleLarge),
         const SizedBox(height: 8),
         SizedBox(
-          height: 180,
+          height: 250,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: results.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemCount: results.length.clamp(0, 10),
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
             itemBuilder: (_, index) {
               final show = results[index];
               return GestureDetector(
                 onTap: () => Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => TvPage(tvId: show['id']),
-                  ),
+                  MaterialPageRoute(builder: (_) => TvPage(tvId: show['id'])),
                 ),
                 child: Column(
                   children: [
@@ -219,17 +190,24 @@ class _TvPageState extends State<TvPage> {
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
                           TMDbService.getImageUrl(show['poster_path']),
-                          height: 140,
+                          height: 180,
                         ),
+                      )
+                    else
+                      Container(
+                        height: 180,
+                        width: 120,
+                        color: Colors.grey,
+                        child: const Icon(Icons.tv, size: 48),
                       ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     SizedBox(
                       width: 100,
                       child: Text(
                         show['name'],
-                        style: const TextStyle(fontSize: 12),
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
+                        style: textTheme.bodyMedium,
                       ),
                     ),
                   ],
@@ -242,106 +220,26 @@ class _TvPageState extends State<TvPage> {
     );
   }
 
-  Widget _buildSeasons() {
-    final seasons = tv?['seasons'] ?? [];
-    if (seasons.isEmpty) return const SizedBox();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 16),
-        const Text('Seasons', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        ...seasons.map<Widget>((season) {
-          final seasonNumber = season['season_number'];
-          final isExpanded = expandedSeasons.contains(seasonNumber);
-          final seasonInfo = seasonDetails[seasonNumber];
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ListTile(
-                leading: season['poster_path'] != null
-                    ? Image.network(
-                        TMDbService.getImageUrl(season['poster_path']),
-                        width: 50,
-                      )
-                    : const Icon(Icons.tv),
-                title: Text(season['name']),
-                subtitle: Text(
-                  '${season['episode_count']} episodes • ${season['air_date']?.toString().substring(0, 4) ?? 'N/A'}',
-                ),
-                trailing: Icon(isExpanded ? Icons.expand_less : Icons.expand_more),
-                onTap: () async {
-                  setState(() {
-                    isExpanded
-                        ? expandedSeasons.remove(seasonNumber)
-                        : expandedSeasons.add(seasonNumber);
-                  });
-
-                  if (!seasonDetails.containsKey(seasonNumber)) {
-                    final details = await TMDbService.getSeasonDetails(widget.tvId, seasonNumber);
-                    if (details != null) {
-                      setState(() {
-                        seasonDetails[seasonNumber] = details;
-                      });
-                    }
-                  }
-                },
-              ),
-              if (isExpanded && seasonInfo != null)
-                Padding(
-                  padding: const EdgeInsets.only(left: 16.0, bottom: 8),
-                  child: Column(
-                    children: (seasonInfo['episodes'] as List).map<Widget>((episode) {
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text('Ep ${episode['episode_number']}: ${episode['name']}'),
-                        subtitle: Text(episode['air_date'] ?? ''),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => EpisodePage(
-                                tvId: widget.tvId,
-                                seasonNumber: seasonNumber,
-                                episodeNumber: episode['episode_number'],
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    }).toList(),
-                  ),
-                )
-            ],
-          );
-        }).toList(),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
     if (isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(tv?['name'] ?? 'TV Show')),
+      appBar: const UnifiedAppBar(showMic: false),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildMetadata(),
-            const SizedBox(height: 12),
-            _buildPosterAndOverview(),
-            _buildCastList(),
-            _buildTrailerButton(),
-            _buildExternalLinks(),
-            _buildSeasons(),
-            _buildSimilarShows(),
+            _buildHeader(textTheme),
+            _buildCastList(textTheme),
+            _buildTrailerButton(colorScheme),
+            _buildSimilarShows(textTheme),
           ],
         ),
       ),

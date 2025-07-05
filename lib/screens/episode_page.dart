@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/tmdb_service.dart';
 import 'actor_page.dart';
+import '../widgets/unified_app_bar.dart';
 
 class EpisodePage extends StatefulWidget {
   final int tvId;
@@ -22,7 +23,6 @@ class _EpisodePageState extends State<EpisodePage> {
   Map<String, dynamic>? episode;
   Map<String, dynamic>? show;
   List<dynamic> episodesInSeason = [];
-
   bool isLoading = true;
 
   @override
@@ -37,7 +37,6 @@ class _EpisodePageState extends State<EpisodePage> {
       seasonNumber: widget.seasonNumber,
       episodeNumber: widget.episodeNumber,
     );
-
     final season = await TMDbService.getSeasonDetails(widget.tvId, widget.seasonNumber);
     final showDetails = await TMDbService.getTvDetails(widget.tvId);
 
@@ -62,10 +61,8 @@ class _EpisodePageState extends State<EpisodePage> {
     );
   }
 
-  Widget _buildEpisodeNavigation() {
-    final currentIndex = episodesInSeason.indexWhere(
-      (e) => e['episode_number'] == widget.episodeNumber,
-    );
+  Widget _buildEpisodeNavigation(TextTheme textTheme) {
+    final currentIndex = episodesInSeason.indexWhere((e) => e['episode_number'] == widget.episodeNumber);
     if (currentIndex == -1) return const SizedBox();
 
     return Row(
@@ -74,12 +71,12 @@ class _EpisodePageState extends State<EpisodePage> {
         if (currentIndex > 0)
           TextButton.icon(
             icon: const Icon(Icons.arrow_back),
-            label: Text('Ep ${episodesInSeason[currentIndex - 1]['episode_number']}'),
+            label: Text('Ep ${episodesInSeason[currentIndex - 1]['episode_number']}', style: textTheme.bodyMedium),
             onPressed: () => navigateToEpisode(episodesInSeason[currentIndex - 1]['episode_number']),
           ),
         if (currentIndex < episodesInSeason.length - 1)
           TextButton.icon(
-            icon: Text('Ep ${episodesInSeason[currentIndex + 1]['episode_number']}'),
+            icon: Text('Ep ${episodesInSeason[currentIndex + 1]['episode_number']}', style: textTheme.bodyMedium),
             label: const Icon(Icons.arrow_forward),
             onPressed: () => navigateToEpisode(episodesInSeason[currentIndex + 1]['episode_number']),
           ),
@@ -87,31 +84,22 @@ class _EpisodePageState extends State<EpisodePage> {
     );
   }
 
-  Widget _buildMetadata() {
+  Widget _buildMetadata(TextTheme textTheme) {
     final runtime = episode?['runtime'] ?? 0;
     final airDate = episode?['air_date'] ?? '';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          episode?['name'] ?? 'Untitled Episode',
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
+        Text(episode?['name'] ?? 'Untitled Episode', style: textTheme.headlineSmall),
         const SizedBox(height: 4),
-        Text(
-          'Season ${widget.seasonNumber}, Episode ${widget.episodeNumber}',
-          style: const TextStyle(color: Colors.grey),
-        ),
+        Text('Season ${widget.seasonNumber}, Episode ${widget.episodeNumber}', style: textTheme.bodySmall),
         if (airDate.isNotEmpty || runtime > 0)
-          Text(
-            '$airDate${runtime > 0 ? ' • ${runtime}m' : ''}',
-            style: const TextStyle(color: Colors.grey),
-          ),
+          Text('$airDate${runtime > 0 ? ' • ${runtime}m' : ''}', style: textTheme.bodySmall),
       ],
     );
   }
 
-  Widget _buildGenres() {
+  Widget _buildGenres(TextTheme textTheme) {
     final genres = show?['genres']?.map((g) => g['name'])?.toList() ?? [];
     if (genres.isEmpty) return const SizedBox();
     return Wrap(
@@ -119,14 +107,14 @@ class _EpisodePageState extends State<EpisodePage> {
       runSpacing: 4,
       children: genres.map<Widget>((genre) {
         return Chip(
-          label: Text(genre, style: const TextStyle(fontSize: 12)),
+          label: Text(genre, style: textTheme.bodySmall),
           padding: const EdgeInsets.symmetric(horizontal: 8),
         );
       }).toList(),
     );
   }
 
-  Widget _buildCrew() {
+  Widget _buildCrew(TextTheme textTheme) {
     final crew = episode?['crew'] ?? [];
     final directors = crew.where((c) => c['job'] == 'Director').map((c) => c['name']).toSet().toList();
     final writers = crew.where((c) => c['job'] == 'Writer' || c['job'] == 'Screenplay').map((c) => c['name']).toSet().toList();
@@ -135,17 +123,17 @@ class _EpisodePageState extends State<EpisodePage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (directors.isNotEmpty)
-          Text('Director: ${directors.join(', ')}', style: const TextStyle(fontSize: 14)),
+          Text('Director: ${directors.join(', ')}', style: textTheme.bodyMedium),
         if (writers.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 4.0),
-            child: Text('Writer: ${writers.join(', ')}', style: const TextStyle(fontSize: 14)),
+            child: Text('Writer: ${writers.join(', ')}', style: textTheme.bodyMedium),
           ),
       ],
     );
   }
 
-  Widget _buildOverviewWithImage() {
+  Widget _buildOverviewWithImage(TextTheme textTheme) {
     final overview = episode?['overview']?.toString().trim();
     final image = episode?['still_path'];
 
@@ -163,10 +151,8 @@ class _EpisodePageState extends State<EpisodePage> {
         const SizedBox(width: 16),
         Expanded(
           child: Text(
-            (overview != null && overview.isNotEmpty)
-                ? overview
-                : 'No overview available.',
-            style: const TextStyle(fontSize: 14),
+            (overview != null && overview.isNotEmpty) ? overview : 'No overview available.',
+            style: textTheme.bodyMedium,
             textAlign: TextAlign.justify,
           ),
         ),
@@ -174,7 +160,7 @@ class _EpisodePageState extends State<EpisodePage> {
     );
   }
 
-  Widget _buildCast() {
+  Widget _buildCast(TextTheme textTheme) {
     final cast = episode?['guest_stars'] ?? [];
     if (cast.isEmpty) return const SizedBox();
 
@@ -182,7 +168,7 @@ class _EpisodePageState extends State<EpisodePage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 16),
-        const Text('Cast', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text('Cast', style: textTheme.titleLarge),
         const SizedBox(height: 8),
         SizedBox(
           height: 120,
@@ -208,9 +194,7 @@ class _EpisodePageState extends State<EpisodePage> {
                       backgroundImage: actor['profile_path'] != null
                           ? NetworkImage(TMDbService.getImageUrl(actor['profile_path']))
                           : null,
-                      child: actor['profile_path'] == null
-                          ? const Icon(Icons.person)
-                          : null,
+                      child: actor['profile_path'] == null ? const Icon(Icons.person) : null,
                     ),
                     const SizedBox(height: 4),
                     SizedBox(
@@ -219,7 +203,7 @@ class _EpisodePageState extends State<EpisodePage> {
                         actor['name'],
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 12),
+                        style: textTheme.bodySmall,
                       ),
                     ),
                   ],
@@ -234,38 +218,29 @@ class _EpisodePageState extends State<EpisodePage> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     if (isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(episode?['name'] ?? 'Episode ${widget.episodeNumber}'),
-            Text(
-              'Season ${widget.seasonNumber}, Episode ${widget.episodeNumber}',
-              style: const TextStyle(fontSize: 12),
-            ),
-          ],
-        ),
-      ),
+      appBar: const UnifiedAppBar(showMic: false),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildEpisodeNavigation(),
+            _buildEpisodeNavigation(textTheme),
             const SizedBox(height: 12),
-            _buildMetadata(),
+            _buildMetadata(textTheme),
             const SizedBox(height: 8),
-            _buildGenres(),
+            _buildGenres(textTheme),
             const SizedBox(height: 12),
-            _buildCrew(),
+            _buildCrew(textTheme),
             const SizedBox(height: 12),
-            _buildOverviewWithImage(),
-            _buildCast(),
+            _buildOverviewWithImage(textTheme),
+            _buildCast(textTheme),
           ],
         ),
       ),

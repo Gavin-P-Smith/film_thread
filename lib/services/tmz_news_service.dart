@@ -34,8 +34,17 @@ class TMZNewsService {
       final link = item.getElement('link')?.text ?? '';
       final description = item.getElement('description')?.text ?? '';
       final pubDate = item.getElement('pubDate')?.text ?? '';
-      final media = item.findAllElements('media:content').firstOrNull;
-      final imageUrl = media?.getAttribute('url') ?? '';
+
+      // Search for any <media:content> tag with a valid image URL
+      final media = item.findElements('media:content').firstWhere(
+        (el) {
+          final url = el.getAttribute('url') ?? '';
+          return url.endsWith('.jpg') || url.endsWith('.png');
+        },
+        orElse: () => XmlElement(XmlName('media:content')),
+      );
+
+      final imageUrl = media.getAttribute('url') ?? '';
 
       return {
         'title': title,

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../services/tmdb_service.dart';
 import 'media_page.dart';
+import '../widgets/unified_app_bar.dart';
 
 class ActorPage extends StatefulWidget {
   final String actorName;
-
   const ActorPage({super.key, required this.actorName});
 
   @override
@@ -45,9 +45,7 @@ class _ActorPageState extends State<ActorPage> {
     }
 
     final combined = [...movieCredits, ...tvCredits]
-      ..sort((a, b) =>
-          (b['release_date'] ?? b['first_air_date'] ?? '')
-              .compareTo(a['release_date'] ?? a['first_air_date'] ?? ''));
+      ..sort((a, b) => (b['release_date'] ?? b['first_air_date'] ?? '').compareTo(a['release_date'] ?? a['first_air_date'] ?? ''));
 
     groupedByDecade = _groupByDecade(combined);
     if (groupedByDecade.isNotEmpty) {
@@ -77,7 +75,7 @@ class _ActorPageState extends State<ActorPage> {
     return Map.fromEntries(sorted);
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(TextTheme textTheme) {
     final profilePath = actorData?['profile_path'];
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,11 +95,11 @@ class _ActorPageState extends State<ActorPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (actorData?['birthday'] != null)
-                Text('Born: ${actorData!['birthday']}', style: const TextStyle(fontSize: 14)),
+                Text('Born: ${actorData!['birthday']}', style: textTheme.bodyMedium),
               if (actorData?['place_of_birth'] != null)
-                Text(actorData!['place_of_birth'], style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                Text(actorData!['place_of_birth'], style: textTheme.bodySmall?.copyWith(color: Colors.grey)),
               const SizedBox(height: 8),
-              _buildBiography()
+              _buildBiography(textTheme)
             ],
           ),
         )
@@ -109,7 +107,7 @@ class _ActorPageState extends State<ActorPage> {
     );
   }
 
-  Widget _buildBiography() {
+  Widget _buildBiography(TextTheme textTheme) {
     return AnimatedSize(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
@@ -118,7 +116,7 @@ class _ActorPageState extends State<ActorPage> {
         children: [
           Text(
             actorData?['biography'] ?? 'No biography available.',
-            style: const TextStyle(fontSize: 14),
+            style: textTheme.bodyMedium,
             maxLines: isBioExpanded ? null : 4,
             overflow: isBioExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
           ),
@@ -134,7 +132,7 @@ class _ActorPageState extends State<ActorPage> {
     );
   }
 
-  Widget _buildFilmography() {
+  Widget _buildFilmography(TextTheme textTheme) {
     return ListView(
       children: groupedByDecade.entries.map((entry) {
         final decade = entry.key;
@@ -145,13 +143,11 @@ class _ActorPageState extends State<ActorPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ListTile(
-              title: Text(decade, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              title: Text(decade, style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
               trailing: Icon(isExpanded ? Icons.expand_less : Icons.expand_more),
               onTap: () {
                 setState(() {
-                  isExpanded
-                      ? expandedDecades.remove(decade)
-                      : expandedDecades.add(decade);
+                  isExpanded ? expandedDecades.remove(decade) : expandedDecades.add(decade);
                 });
               },
             ),
@@ -163,11 +159,10 @@ class _ActorPageState extends State<ActorPage> {
                             width: 50,
                           )
                         : const Icon(Icons.movie),
-                    title: Text(item['title'] ?? item['name']),
+                    title: Text(item['title'] ?? item['name'], style: textTheme.bodyLarge),
                     subtitle: Text(
-                      (item['release_date'] ?? item['first_air_date'] ?? '')
-                          .toString()
-                          .substring(0, 4),
+                      (item['release_date'] ?? item['first_air_date'] ?? '').toString().substring(0, 4),
+                      style: textTheme.bodySmall,
                     ),
                     onTap: () {
                       Navigator.push(
@@ -189,20 +184,22 @@ class _ActorPageState extends State<ActorPage> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     if (isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.actorName)),
+      appBar: const UnifiedAppBar(showMic: false),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (actorData != null) _buildHeader(),
+            if (actorData != null) _buildHeader(textTheme),
             const SizedBox(height: 16),
-            Expanded(child: _buildFilmography()),
+            Expanded(child: _buildFilmography(textTheme)),
           ],
         ),
       ),

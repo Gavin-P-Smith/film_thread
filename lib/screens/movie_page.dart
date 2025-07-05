@@ -1,11 +1,12 @@
+// lib/screens/movie_page.dart
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/tmdb_service.dart';
 import 'actor_page.dart';
+import '../widgets/unified_app_bar.dart';
 
 class MoviePage extends StatefulWidget {
   final int movieId;
-
   const MoviePage({super.key, required this.movieId});
 
   @override
@@ -94,7 +95,7 @@ class _MoviePageState extends State<MoviePage> {
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: RichText(
         text: TextSpan(
-          style: const TextStyle(color: Colors.black),
+          style: Theme.of(context).textTheme.bodyMedium,
           children: [
             TextSpan(text: "$job: ", style: const TextStyle(fontWeight: FontWeight.bold)),
             TextSpan(text: filtered.map((c) => c['name']).join(', '))
@@ -106,10 +107,11 @@ class _MoviePageState extends State<MoviePage> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
     if (isLoading || movie == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final posterUrl = movie!['poster_path'] != null
@@ -119,64 +121,59 @@ class _MoviePageState extends State<MoviePage> {
     final trailerKey = getTrailerYoutubeKey();
 
     return Scaffold(
-      appBar: AppBar(title: Text(movie!['title'] ?? '')),
+      appBar: const UnifiedAppBar(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (posterUrl != null)
-              Center(
-                child: Container(
-                  decoration: const BoxDecoration(
-                    boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)],
-                  ),
-                  child: Image.network(posterUrl, height: 300),
-                ),
-              ),
-            const SizedBox(height: 16),
-            Center(
-              child: Text(
-                '${movie!['title']} (${movie!['release_date']?.toString().substring(0, 4) ?? 'N/A'})',
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: (movie!['genres'] as List?)?.map((g) => Chip(label: Text(g['name']))).toList() ?? [const Text('No genre info')],
-            ),
-            const SizedBox(height: 8),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.schedule, size: 18),
-                const SizedBox(width: 4),
-                Text('${movie!['runtime']} min'),
+                if (posterUrl != null)
+                  Container(
+                    decoration: BoxDecoration(boxShadow: [
+                      BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(2, 4))
+                    ]),
+                    child: Image.network(posterUrl, height: 250),
+                  ),
                 const SizedBox(width: 16),
-                const Icon(Icons.warning, size: 18),
-                const SizedBox(width: 4),
-                Text(getCertification()),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('${movie!['title']} (${movie!['release_date']?.substring(0, 4) ?? 'N/A'})', style: textTheme.titleLarge),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: (movie!['genres'] as List?)?.map((g) => Chip(label: Text(g['name']))).toList() ?? [],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.schedule, size: 18),
+                          const SizedBox(width: 4),
+                          Text('${movie!['runtime']} min', style: textTheme.bodyMedium),
+                          const SizedBox(width: 16),
+                          const Icon(Icons.warning, size: 18),
+                          const SizedBox(width: 4),
+                          Text(getCertification(), style: textTheme.bodyMedium),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                movie!['overview'] ?? 'No summary available.',
-                style: const TextStyle(fontSize: 16),
-                textAlign: TextAlign.justify,
-              ),
-            ),
-            const SizedBox(height: 16),
+            Text(movie!['overview'] ?? 'No summary available.', style: textTheme.bodyLarge, textAlign: TextAlign.justify),
+            const SizedBox(height: 20),
             buildCrewList('Director'),
             buildCrewList('Writer'),
             buildCrewList('Original Music Composer'),
             const SizedBox(height: 20),
-            const Text('Cast', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('Cast', style: textTheme.titleLarge),
             const SizedBox(height: 8),
             SizedBox(
               height: 160,
@@ -190,9 +187,7 @@ class _MoviePageState extends State<MoviePage> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => ActorPage(actorName: actor['name']),
-                        ),
+                        MaterialPageRoute(builder: (_) => ActorPage(actorName: actor['name'])),
                       );
                     },
                     child: Column(
@@ -207,11 +202,7 @@ class _MoviePageState extends State<MoviePage> {
                         const SizedBox(height: 4),
                         SizedBox(
                           width: 80,
-                          child: Text(
-                            actor['name'],
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                          ),
+                          child: Text(actor['name'], overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: textTheme.bodyMedium),
                         ),
                       ],
                     ),
@@ -222,19 +213,20 @@ class _MoviePageState extends State<MoviePage> {
             const SizedBox(height: 20),
             if (trailerKey != null)
               Center(
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
+                child: FilledButton.icon(
+                  icon: const Icon(Icons.play_arrow),
+                  label: const Text('Watch Trailer'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colorScheme.primary,
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     textStyle: const TextStyle(fontSize: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                   ),
-                  icon: const Icon(Icons.play_arrow),
-                  label: const Text('Watch Trailer'),
                   onPressed: () => _launchYouTubeTrailer(trailerKey),
                 ),
               ),
             const SizedBox(height: 20),
-            const Text('Similar Movies', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('Similar Movies', style: textTheme.titleLarge),
             const SizedBox(height: 8),
             SizedBox(
               height: 250,
@@ -248,9 +240,7 @@ class _MoviePageState extends State<MoviePage> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => MoviePage(movieId: sm['id']),
-                        ),
+                        MaterialPageRoute(builder: (_) => MoviePage(movieId: sm['id'])),
                       );
                     },
                     child: Column(
@@ -272,12 +262,8 @@ class _MoviePageState extends State<MoviePage> {
                         const SizedBox(height: 6),
                         SizedBox(
                           width: 100,
-                          child: Text(
-                            sm['title'],
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                          ),
-                        )
+                          child: Text(sm['title'], overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: textTheme.bodyMedium),
+                        ),
                       ],
                     ),
                   );

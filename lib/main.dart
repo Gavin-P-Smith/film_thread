@@ -14,10 +14,21 @@ class MyApp extends StatelessWidget {
       title: 'Film Thread',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: Colors.black,
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFF2196F3),
+          secondary: Color(0xFF9C27B0),
+          background: Colors.black,
+        ),
+        textTheme: const TextTheme(
+          headlineLarge: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: Colors.white),
+          bodyLarge: TextStyle(fontSize: 16, color: Colors.white),
+          bodyMedium: TextStyle(fontSize: 14, color: Colors.white70),
+        ),
       ),
       home: const LandingPage(),
     );
   }
-}
+} 

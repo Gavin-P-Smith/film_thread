@@ -4,6 +4,7 @@ import '../services/tmdb_service.dart';
 import '../services/tmz_news_service.dart';
 import 'media_page.dart';
 import 'actor_page.dart';
+import '../widgets/unified_app_bar.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class LandingPage extends StatefulWidget {
@@ -36,99 +37,25 @@ class _LandingPageState extends State<LandingPage> {
     });
   }
 
-  void _onSearchChanged(String query) {
-    if (_debounce?.isActive ?? false) _debounce?.cancel();
-
-    _debounce = Timer(const Duration(milliseconds: 300), () {
-      if (query.trim().length > 2) {
-        _performSearch(query);
-      } else {
-        setState(() {
-          searchResults = [];
-          searchQuery = query;
-        });
-      }
-    });
-  }
-
-  Future<void> _performSearch(String query) async {
-    setState(() {
-      searchQuery = query;
-      isSearching = true;
-    });
-
-    final results = await TMDbService.searchMulti(query);
-    setState(() {
-      searchResults = results;
-      isSearching = false;
-    });
-  }
-
-  Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
-      child: TextField(
-        decoration: const InputDecoration(
-          hintText: 'Search movies, TV shows, or actors...',
-          prefixIcon: Icon(Icons.search),
-          border: OutlineInputBorder(),
-        ),
-        onChanged: _onSearchChanged,
+  void _onMicPressed() {
+    final mediaType = testTv ? 'tv' : 'movie';
+    final mediaId = testTv ? 1399 : 24428;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MediaPage(id: mediaId, mediaType: mediaType),
       ),
     );
   }
 
-  Widget _buildSearchResults() {
-    if (isSearching) return const Center(child: CircularProgressIndicator());
-    if (searchQuery.isEmpty || searchResults.isEmpty) return const SizedBox.shrink();
-
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: searchResults.length,
-      itemBuilder: (_, index) {
-        final item = searchResults[index];
-        final mediaType = item['media_type'];
-        final title = item['title'] ?? item['name'] ?? 'Untitled';
-        final imagePath = item['poster_path'] ?? item['profile_path'];
-
-        return ListTile(
-          leading: imagePath != null
-              ? Image.network(TMDbService.getImageUrl(imagePath), width: 50, fit: BoxFit.cover)
-              : const Icon(Icons.movie),
-          title: Text(title),
-          subtitle: Text(mediaType.toString().toUpperCase()),
-          onTap: () {
-            if (mediaType == 'movie' || mediaType == 'tv') {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => MediaPage(id: item['id'], mediaType: mediaType),
-                ),
-              );
-            } else if (mediaType == 'person') {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ActorPage(actorName: item['name']),
-                ),
-              );
-            }
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildNewsSection() {
+  Widget _buildNewsSection(TextTheme textTheme, ColorScheme colorScheme) {
     if (loadingNews) return const Center(child: CircularProgressIndicator());
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
-          child: Text('📰 Entertainment News', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+          child: Text('📰 Entertainment News', style: textTheme.titleLarge),
         ),
         SizedBox(
           height: 270,
@@ -137,11 +64,10 @@ class _LandingPageState extends State<LandingPage> {
             itemCount: news.length,
             itemBuilder: (context, index) {
               final article = news[index];
-              final imageUrl = article['imageUrl'];
+              final imageUrl = article['imageUrl'] ?? '';
               final title = article['title'] ?? '';
               final description = article['description'] ?? '';
               final link = article['link'] ?? '';
-
               return Container(
                 width: 280,
                 margin: const EdgeInsets.symmetric(horizontal: 8),
@@ -149,7 +75,7 @@ class _LandingPageState extends State<LandingPage> {
                   onTap: () => showModalBottomSheet(
                     context: context,
                     isScrollControlled: true,
-                    backgroundColor: Colors.white,
+                    backgroundColor: colorScheme.background,
                     shape: const RoundedRectangleBorder(
                       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
                     ),
@@ -163,14 +89,21 @@ class _LandingPageState extends State<LandingPage> {
                         child: ListView(
                           controller: controller,
                           children: [
-                            Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            Text(title, style: textTheme.titleLarge),
                             const SizedBox(height: 12),
-                            Text(description),
+                            Text(description, style: textTheme.bodyMedium),
                             const SizedBox(height: 20),
                             ElevatedButton.icon(
                               onPressed: () => launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication),
-                              icon: const Icon(Icons.open_in_browser),
-                              label: const Text('Read Full Article'),
+                              icon: const Icon(Icons.open_in_browser, color: Colors.white),
+                              label: Text('Read Full Article', style: textTheme.labelLarge?.copyWith(color: Colors.white)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: colorScheme.primary,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
                             )
                           ],
                         ),
@@ -183,7 +116,7 @@ class _LandingPageState extends State<LandingPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        imageUrl != null && imageUrl.isNotEmpty
+                        imageUrl.isNotEmpty
                             ? Image.network(
                                 imageUrl,
                                 height: 140,
@@ -191,31 +124,22 @@ class _LandingPageState extends State<LandingPage> {
                                 fit: BoxFit.cover,
                                 errorBuilder: (_, __, ___) => Container(
                                   height: 140,
-                                  color: Colors.grey[300],
-                                  child: const Center(child: Icon(Icons.image_not_supported)),
+                                  color: Colors.grey[800],
+                                  child: const Center(child: Icon(Icons.broken_image, color: Colors.white)),
                                 ),
                               )
                             : Container(
                                 height: 140,
-                                color: Colors.grey[300],
-                                child: const Center(child: Icon(Icons.image_not_supported)),
+                                color: Colors.grey[800],
+                                child: const Center(child: Icon(Icons.image, color: Colors.white)),
                               ),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            title,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          child: Text(title, style: textTheme.titleSmall, maxLines: 2, overflow: TextOverflow.ellipsis),
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Text(
-                            description,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          child: Text(description, style: textTheme.bodySmall, maxLines: 2, overflow: TextOverflow.ellipsis),
                         ),
                       ],
                     ),
@@ -229,43 +153,20 @@ class _LandingPageState extends State<LandingPage> {
     );
   }
 
-  Widget _buildTestToggleRow() {
+  Widget _buildTestToggleRow(TextTheme textTheme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
         children: [
-          const Text('Test TV Show'),
+          Text('Test TV Show', style: textTheme.bodyMedium),
           const SizedBox(width: 8),
           Switch(
             value: testTv,
             onChanged: (val) => setState(() => testTv = val),
           ),
-          Text(testTv ? 'TV Mode' : 'Movie Mode', style: const TextStyle(color: Colors.grey)),
+          Text(testTv ? 'TV Mode' : 'Movie Mode', style: textTheme.bodySmall),
         ],
       ),
-    );
-  }
-
-  Widget _buildTestMicButton() {
-    return IconButton(
-      icon: const Icon(Icons.mic),
-      onPressed: () {
-        if (testTv) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const MediaPage(id: 1399, mediaType: 'tv'),
-            ),
-          );
-        } else {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const MediaPage(id: 24428, mediaType: 'movie'),
-            ),
-          );
-        }
-      },
     );
   }
 
@@ -277,27 +178,16 @@ class _LandingPageState extends State<LandingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.only(bottom: 24),
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('🎬 Film Thread', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  _buildTestMicButton(),
-                ],
-              ),
-            ),
-            _buildTestToggleRow(),
-            _buildSearchBar(),
-            _buildSearchResults(),
-            _buildNewsSection(),
-          ],
-        ),
+      appBar: UnifiedAppBar(onMicPressed: _onMicPressed),
+      body: ListView(
+        padding: const EdgeInsets.only(bottom: 24),
+        children: [
+          _buildTestToggleRow(textTheme),
+          _buildNewsSection(textTheme, colorScheme),
+        ],
       ),
     );
   }
