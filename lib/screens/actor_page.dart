@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/tmdb_service.dart';
 import 'media_page.dart';
+import 'bacon_path_result_page.dart';
 import '../widgets/unified_app_bar.dart';
 import '../widgets/expandable_text_preview.dart';
 import '../widgets/large_text_page.dart';
@@ -116,59 +117,82 @@ class _ActorPageState extends State<ActorPage> {
 
   Widget _buildFilmography(TextTheme textTheme) {
     return ListView(
-      children: groupedByDecade.entries.map((entry) {
-        final decade = entry.key;
-        final movies = entry.value;
-        final isExpanded = expandedDecades.contains(decade);
+      children: [
+        ...groupedByDecade.entries.map((entry) {
+          final decade = entry.key;
+          final movies = entry.value;
+          final isExpanded = expandedDecades.contains(decade);
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ListTile(
-              title: Text(decade,
-                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-              trailing: Icon(isExpanded ? Icons.expand_less : Icons.expand_more),
-              onTap: () {
-                setState(() {
-                  isExpanded ? expandedDecades.remove(decade) : expandedDecades.add(decade);
-                });
-              },
-            ),
-            if (isExpanded)
-              ...movies.map((item) => ListTile(
-                    leading: item['poster_path'] != null
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: Image.network(
-                              TMDbService.getImageUrl(item['poster_path']),
-                              width: 50,
-                              height: 75,
-                              fit: BoxFit.cover,
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ListTile(
+                title: Text(decade,
+                    style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                trailing: Icon(isExpanded ? Icons.expand_less : Icons.expand_more),
+                onTap: () {
+                  setState(() {
+                    isExpanded ? expandedDecades.remove(decade) : expandedDecades.add(decade);
+                  });
+                },
+              ),
+              if (isExpanded)
+                ...movies.map((item) => ListTile(
+                      leading: item['poster_path'] != null
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: Image.network(
+                                TMDbService.getImageUrl(item['poster_path']),
+                                width: 50,
+                                height: 75,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          : const Icon(Icons.movie),
+                      title: Text(item['title'] ?? item['name'], style: textTheme.bodyLarge),
+                      subtitle: Text(
+                        (item['release_date'] ?? item['first_air_date'] ?? '')
+                            .toString()
+                            .substring(0, 4),
+                        style: textTheme.bodySmall,
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => MediaPage(
+                              id: item['id'],
+                              mediaType: item['media_type'] ?? 'movie',
                             ),
-                          )
-                        : const Icon(Icons.movie),
-                    title: Text(item['title'] ?? item['name'], style: textTheme.bodyLarge),
-                    subtitle: Text(
-                      (item['release_date'] ?? item['first_air_date'] ?? '')
-                          .toString()
-                          .substring(0, 4),
-                      style: textTheme.bodySmall,
-                    ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => MediaPage(
-                            id: item['id'],
-                            mediaType: item['media_type'] ?? 'movie',
                           ),
-                        ),
-                      );
-                    },
-                  )),
-          ],
-        );
-      }).toList(),
+                        );
+                      },
+                    )),
+            ],
+          );
+        }),
+        const SizedBox(height: 20),
+        if (actorData != null)
+          Center(
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BaconPathResultPage(
+                      startActorId: actorData!['id'],
+                      startActorName: actorData!['name'],
+                    ),
+                  ),
+                );
+              },
+              child: Image.asset(
+                'assets/kevin_bacon.png',
+                height: 60,
+              ),
+            ),
+          ),
+      ],
     );
   }
 

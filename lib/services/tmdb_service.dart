@@ -105,6 +105,19 @@ class TMDbService {
     return data?['cast'] ?? [];
   }
 
+  static Future<List<dynamic>> getCombinedCredits(int personId) async {
+    final url = Uri.parse('$_baseUrl/person/$personId/combined_credits?api_key=$_apiKey');
+    final data = await _getJson(url);
+    return data?['cast'] ?? [];
+  }
+
+  static Future<List<dynamic>> getCredits(int mediaId, {required bool isTV}) async {
+    final endpoint = isTV ? 'tv' : 'movie';
+    final url = Uri.parse('$_baseUrl/$endpoint/$mediaId/credits?api_key=$_apiKey');
+    final data = await _getJson(url);
+    return data?['cast'] ?? [];
+  }
+
   // --- Actor/Person Methods ---
   static Future<Map<String, dynamic>?> searchActorByName(String name) async {
     final encodedName = Uri.encodeQueryComponent(name);
