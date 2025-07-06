@@ -3,7 +3,7 @@ import '../services/tmdb_service.dart';
 import 'actor_page.dart';
 import '../widgets/unified_app_bar.dart';
 import '../widgets/expandable_text_preview.dart';
-import '../widgets/large_text_page.dart';
+import '../widgets/genre_chip.dart';
 
 class EpisodePage extends StatefulWidget {
   final int tvId;
@@ -63,6 +63,45 @@ class _EpisodePageState extends State<EpisodePage> {
     );
   }
 
+  Widget _buildHeader(TextTheme textTheme) {
+    final stillPath = episode?['still_path'];
+    final runtime = episode?['runtime'] ?? 0;
+    final airDate = episode?['air_date'] ?? '';
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (stillPath != null)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              TMDbService.getImageUrl(stillPath, size: 300),
+              height: 160,
+              width: 120,
+              fit: BoxFit.cover,
+            ),
+          )
+        else
+          const Icon(Icons.tv, size: 120),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(episode?['name'] ?? 'Untitled Episode', style: textTheme.titleLarge),
+              const SizedBox(height: 4),
+              Text('Season ${widget.seasonNumber}, Episode ${widget.episodeNumber}',
+                  style: textTheme.bodySmall),
+              if (airDate.isNotEmpty || runtime > 0)
+                Text('$airDate${runtime > 0 ? ' • ${runtime}m' : ''}',
+                    style: textTheme.bodySmall),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildEpisodeNavigation(TextTheme textTheme) {
     final currentIndex = episodesInSeason.indexWhere((e) => e['episode_number'] == widget.episodeNumber);
     if (currentIndex == -1) return const SizedBox();
@@ -92,33 +131,13 @@ class _EpisodePageState extends State<EpisodePage> {
     );
   }
 
-  Widget _buildMetadata(TextTheme textTheme) {
-    final runtime = episode?['runtime'] ?? 0;
-    final airDate = episode?['air_date'] ?? '';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(episode?['name'] ?? 'Untitled Episode', style: textTheme.headlineSmall),
-        const SizedBox(height: 4),
-        Text('Season ${widget.seasonNumber}, Episode ${widget.episodeNumber}', style: textTheme.bodySmall),
-        if (airDate.isNotEmpty || runtime > 0)
-          Text('$airDate${runtime > 0 ? ' • ${runtime}m' : ''}', style: textTheme.bodySmall),
-      ],
-    );
-  }
-
   Widget _buildGenres(TextTheme textTheme) {
     final genres = show?['genres']?.map((g) => g['name'])?.toList() ?? [];
     if (genres.isEmpty) return const SizedBox();
     return Wrap(
       spacing: 8,
       runSpacing: 4,
-      children: genres.map<Widget>((genre) {
-        return Chip(
-          label: Text(genre, style: textTheme.bodySmall),
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-        );
-      }).toList(),
+      children: genres.map<Widget>((genre) => GenreChip(genre)).toList(),
     );
   }
 
@@ -141,30 +160,14 @@ class _EpisodePageState extends State<EpisodePage> {
     );
   }
 
-  Widget _buildOverviewWithImage(TextTheme textTheme) {
+  Widget _buildOverview(TextTheme textTheme) {
     final overview = episode?['overview']?.toString().trim();
-    final image = episode?['still_path'];
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (image != null)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(
-              TMDbService.getImageUrl(image, size: 300),
-              height: 160,
-            ),
-          ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: ExpandableTextPreview(
-            title: 'Episode Overview',
-            text: (overview != null && overview.isNotEmpty) ? overview : 'No overview available.',
-            heroTag: 'episode_overview_${widget.tvId}_${widget.seasonNumber}_${widget.episodeNumber}',
-          ),
-        ),
-      ],
+    return ExpandableTextPreview(
+      title: 'Episode Overview',
+      text: (overview != null && overview.isNotEmpty)
+          ? overview
+          : 'No overview available.',
+      heroTag: 'episode_overview_${widget.tvId}_${widget.seasonNumber}_${widget.episodeNumber}',
     );
   }
 
@@ -233,7 +236,7 @@ class _EpisodePageState extends State<EpisodePage> {
     }
 
     return Scaffold(
-      appBar: const UnifiedAppBar(), // ✅ Mic now included consistently
+      appBar: const UnifiedAppBar(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -241,13 +244,13 @@ class _EpisodePageState extends State<EpisodePage> {
           children: [
             _buildEpisodeNavigation(textTheme),
             const SizedBox(height: 12),
-            _buildMetadata(textTheme),
-            const SizedBox(height: 8),
+            _buildHeader(textTheme),
+            const SizedBox(height: 12),
             _buildGenres(textTheme),
             const SizedBox(height: 12),
             _buildCrew(textTheme),
             const SizedBox(height: 12),
-            _buildOverviewWithImage(textTheme),
+            _buildOverview(textTheme),
             _buildCast(textTheme),
           ],
         ),

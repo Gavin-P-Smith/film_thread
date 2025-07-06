@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/tmdb_service.dart';
-import 'actor_page.dart';
-import 'episode_page.dart';
+import 'actor_page.dart' as actor;
+import 'episode_page.dart' as episode;
 import '../widgets/unified_app_bar.dart';
 import '../widgets/expandable_text_preview.dart';
+import '../widgets/genre_chip.dart';
 
 class TvPage extends StatefulWidget {
   final int tvId;
@@ -57,8 +58,7 @@ class _TvPageState extends State<TvPage> {
       return;
     }
 
-    final seasonData =
-        await TMDbService.getSeasonDetails(widget.tvId, seasonNumber);
+    final seasonData = await TMDbService.getSeasonDetails(widget.tvId, seasonNumber);
 
     if (seasonData != null) {
       setState(() {
@@ -69,7 +69,7 @@ class _TvPageState extends State<TvPage> {
   }
 
   Widget _buildHeader(TextTheme textTheme) {
-    final genres = tv?['genres']?.map((g) => g['name'])?.join(', ') ?? '';
+    final genreList = tv?['genres'] ?? [];
     final date = tv?['first_air_date']?.toString().substring(0, 4) ?? '';
     final poster = tv?['poster_path'] != null
         ? TMDbService.getImageUrl(tv!['poster_path'], size: 300)
@@ -92,8 +92,13 @@ class _TvPageState extends State<TvPage> {
             children: [
               Text(tv?['name'] ?? 'Unknown', style: textTheme.headlineLarge),
               const SizedBox(height: 4),
-              if (genres.isNotEmpty || date.isNotEmpty)
-                Text('$genres • $date', style: textTheme.bodyMedium),
+              Text(date, style: textTheme.bodyMedium),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: genreList.map<Widget>((g) => GenreChip(g['name'])).toList(),
+              ),
               const SizedBox(height: 12),
               ExpandableTextPreview(
                 title: 'Overview',
@@ -123,23 +128,22 @@ class _TvPageState extends State<TvPage> {
             itemCount: cast.length,
             separatorBuilder: (_, __) => const SizedBox(width: 8),
             itemBuilder: (_, index) {
-              final actor = cast[index];
+              final actorItem = cast[index];
               return GestureDetector(
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => ActorPage(actorId: actor['id']),
+                    builder: (_) => actor.ActorPage(actorId: actorItem['id']),
                   ),
                 ),
                 child: Column(
                   children: [
                     CircleAvatar(
                       radius: 40,
-                      backgroundImage: actor['profile_path'] != null
-                          ? NetworkImage(
-                              TMDbService.getImageUrl(actor['profile_path']))
+                      backgroundImage: actorItem['profile_path'] != null
+                          ? NetworkImage(TMDbService.getImageUrl(actorItem['profile_path']))
                           : null,
-                      child: actor['profile_path'] == null
+                      child: actorItem['profile_path'] == null
                           ? const Icon(Icons.person)
                           : null,
                     ),
@@ -147,7 +151,7 @@ class _TvPageState extends State<TvPage> {
                     SizedBox(
                       width: 80,
                       child: Text(
-                        actor['name'],
+                        actorItem['name'],
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
                         style: textTheme.bodySmall,
@@ -199,10 +203,8 @@ class _TvPageState extends State<TvPage> {
         ...seasons.map<Widget>((season) {
           final seasonNumber = season['season_number'];
           final seasonName = season['name'];
-          final seasonPoster = season['poster_path'];
           final isExpanded = expandedSeasons.contains(seasonNumber);
-          final seasonEpisodes =
-              seasonDetails[seasonNumber]?['episodes'] ?? [];
+          final seasonEpisodes = seasonDetails[seasonNumber]?['episodes'] ?? [];
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,21 +212,18 @@ class _TvPageState extends State<TvPage> {
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(seasonName,
-                    style: textTheme.titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold)),
-                trailing: Icon(
-                    isExpanded ? Icons.expand_less : Icons.expand_more),
+                    style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                trailing: Icon(isExpanded ? Icons.expand_less : Icons.expand_more),
                 onTap: () => toggleSeason(seasonNumber),
               ),
               if (isExpanded)
                 ...seasonEpisodes.map<Widget>((ep) {
                   return ListTile(
-                    title: Text(
-                        'Episode ${ep['episode_number']}: ${ep['name'] ?? 'Untitled'}'),
+                    title: Text('Episode ${ep['episode_number']}: ${ep['name'] ?? 'Untitled'}'),
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => EpisodePage(
+                        builder: (_) => episode.EpisodePage(
                           tvId: widget.tvId,
                           seasonNumber: seasonNumber,
                           episodeNumber: ep['episode_number'],

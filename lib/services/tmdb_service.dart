@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class TMDbService {
-  static const String _apiKey = '38f9ac0f23b36b7c64990e9711335610';
+  static final String _apiKey = dotenv.env['TMDB_API_KEY'] ?? '';
   static const String _baseUrl = 'https://api.themoviedb.org/3';
 
   // --- Search Methods ---
@@ -126,12 +127,19 @@ class TMDbService {
 
   // --- HTTP Helper ---
   static Future<Map<String, dynamic>?> _getJson(Uri url) async {
+    if (_apiKey.isEmpty) {
+      throw Exception('TMDB_API_KEY is missing. Check your .env file.');
+    }
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
+      } else {
+        print('TMDb API error: ${response.statusCode} - ${response.reasonPhrase}');
       }
-    } catch (_) {}
+    } catch (e) {
+      print('TMDb request failed: $e');
+    }
     return null;
   }
 }

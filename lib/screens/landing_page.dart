@@ -13,7 +13,6 @@ class LandingPage extends StatefulWidget {
 }
 
 class _LandingPageState extends State<LandingPage> {
-  bool testTv = true;
   List<Map<String, String>> news = [];
   bool loadingNews = true;
   Timer? _debounce;
@@ -80,7 +79,10 @@ class _LandingPageState extends State<LandingPage> {
                             ElevatedButton.icon(
                               onPressed: () => launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication),
                               icon: const Icon(Icons.open_in_browser, color: Colors.white),
-                              label: Text('Read Full Article', style: textTheme.labelLarge?.copyWith(color: Colors.white)),
+                              label: Text(
+                                'Read Full Article',
+                                style: textTheme.labelLarge?.copyWith(color: Colors.white),
+                              ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: colorScheme.primary,
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -137,23 +139,6 @@ class _LandingPageState extends State<LandingPage> {
     );
   }
 
-  Widget _buildTestToggleRow(TextTheme textTheme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Row(
-        children: [
-          Text('Test TV Show', style: textTheme.bodyMedium),
-          const SizedBox(width: 8),
-          Switch(
-            value: testTv,
-            onChanged: (val) => setState(() => testTv = val),
-          ),
-          Text(testTv ? 'TV Mode' : 'Movie Mode', style: textTheme.bodySmall),
-        ],
-      ),
-    );
-  }
-
   @override
   void dispose() {
     _debounce?.cancel();
@@ -166,11 +151,10 @@ class _LandingPageState extends State<LandingPage> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: const UnifiedAppBar(), // ✅ Mic consistently shown here too
+      appBar: const UnifiedAppBar(),
       body: ListView(
         padding: const EdgeInsets.only(bottom: 24),
         children: [
-          _buildTestToggleRow(textTheme),
           _buildNewsSection(textTheme, colorScheme),
         ],
       ),

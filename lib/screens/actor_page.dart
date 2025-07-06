@@ -76,15 +76,21 @@ class _ActorPageState extends State<ActorPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        profilePath != null
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  TMDbService.getImageUrl(profilePath, size: 200),
-                  height: 120,
-                ),
-              )
-            : const Icon(Icons.person, size: 120),
+        if (profilePath != null)
+          Container(
+            decoration: const BoxDecoration(boxShadow: [
+              BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(2, 4))
+            ]),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                TMDbService.getImageUrl(profilePath, size: 300),
+                height: 160,
+              ),
+            ),
+          )
+        else
+          const Icon(Icons.person, size: 160),
         const SizedBox(width: 16),
         Expanded(
           child: Column(
@@ -131,9 +137,14 @@ class _ActorPageState extends State<ActorPage> {
             if (isExpanded)
               ...movies.map((item) => ListTile(
                     leading: item['poster_path'] != null
-                        ? Image.network(
-                            TMDbService.getImageUrl(item['poster_path']),
-                            width: 50,
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.network(
+                              TMDbService.getImageUrl(item['poster_path']),
+                              width: 50,
+                              height: 75,
+                              fit: BoxFit.cover,
+                            ),
                           )
                         : const Icon(Icons.movie),
                     title: Text(item['title'] ?? item['name'], style: textTheme.bodyLarge),
@@ -170,7 +181,7 @@ class _ActorPageState extends State<ActorPage> {
     }
 
     return Scaffold(
-      appBar: const UnifiedAppBar(), // ✅ Ensure mic is always visible
+      appBar: const UnifiedAppBar(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

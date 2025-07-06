@@ -6,6 +6,7 @@ import 'actor_page.dart';
 import '../widgets/unified_app_bar.dart';
 import '../widgets/expandable_text_preview.dart';
 import '../widgets/large_text_page.dart';
+import '../widgets/genre_chip.dart';
 
 class MoviePage extends StatefulWidget {
   final int movieId;
@@ -134,31 +135,55 @@ class _MoviePageState extends State<MoviePage> {
               children: [
                 if (posterUrl != null)
                   Container(
-                    decoration: const BoxDecoration(boxShadow: [
-                      BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(2, 4))
-                    ]),
-                    child: Image.network(posterUrl, height: 250),
+                    width: 120,
+                    height: 180,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      image: DecorationImage(
+                        image: NetworkImage(posterUrl),
+                        fit: BoxFit.cover,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 8,
+                          offset: Offset(2, 4),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Container(
+                    width: 120,
+                    height: 180,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[400],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.movie, size: 48),
                   ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('${movie!['title']} (${movie!['release_date']?.substring(0, 4) ?? 'N/A'})', style: textTheme.titleLarge),
+                      Text(movie!['title'] ?? 'Unknown', style: textTheme.titleLarge),
+                      const SizedBox(height: 4),
+                      Text(movie!['release_date']?.substring(0, 4) ?? 'N/A', style: textTheme.bodyMedium),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
                         runSpacing: 4,
-                        children: (movie!['genres'] as List?)?.map((g) => Chip(label: Text(g['name']))).toList() ?? [],
+                        children: (movie!['genres'] as List?)?.map((g) => GenreChip(g['name'])).toList() ?? [],
                       ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          const Icon(Icons.schedule, size: 18),
+                          const Icon(Icons.schedule, size: 16),
                           const SizedBox(width: 4),
                           Text('${movie!['runtime']} min', style: textTheme.bodyMedium),
                           const SizedBox(width: 16),
-                          const Icon(Icons.warning, size: 18),
+                          const Icon(Icons.warning, size: 16),
                           const SizedBox(width: 4),
                           Text(getCertification(), style: textTheme.bodyMedium),
                         ],
