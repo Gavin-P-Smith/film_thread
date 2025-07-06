@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../screens/results_page.dart';
 
 class UnifiedAppBar extends StatefulWidget implements PreferredSizeWidget {
   final bool showMic;
@@ -38,6 +39,19 @@ class _UnifiedAppBarState extends State<UnifiedAppBar> {
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  void _submitSearch(String query) {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ResultsPage(query: trimmed),
+      ),
+    );
+    _searchFocusNode.unfocus();
   }
 
   @override
@@ -93,18 +107,22 @@ class _UnifiedAppBarState extends State<UnifiedAppBar> {
                           border: InputBorder.none,
                           isCollapsed: true,
                         ),
-                        onSubmitted: (query) {
-                          // Add search logic if needed
-                        },
+                        onChanged: (_) => setState(() => isSearching = true),
+                        onSubmitted: _submitSearch,
                       ),
                     ),
-                    if (isSearching || _searchController.text.isNotEmpty)
+                    if (_searchController.text.isNotEmpty)
                       GestureDetector(
                         onTap: () {
                           _searchController.clear();
                           setState(() => isSearching = false);
                         },
                         child: const Icon(Icons.close, size: 20),
+                      )
+                    else
+                      GestureDetector(
+                        onTap: () => _submitSearch(_searchController.text),
+                        child: const Icon(Icons.arrow_forward, size: 20),
                       ),
                   ],
                 ),
@@ -116,7 +134,16 @@ class _UnifiedAppBarState extends State<UnifiedAppBar> {
               const SizedBox(width: 16),
               IconButton(
                 icon: const Icon(Icons.mic, size: 28),
-                onPressed: widget.onMicPressed,
+                onPressed: () async {
+                  if (widget.onMicPressed != null) {
+                    widget.onMicPressed!();
+                  } else {
+                    // Example stub:
+                    // String spokenText = await SpeechService.listen();
+                    // _searchController.text = spokenText;
+                    // _submitSearch(spokenText);
+                  }
+                },
               ),
             ],
           ],

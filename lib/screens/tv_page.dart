@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/tmdb_service.dart';
 import 'actor_page.dart';
+import 'episode_page.dart';
 import '../widgets/unified_app_bar.dart';
+import '../widgets/expandable_text_preview.dart';
 
 class TvPage extends StatefulWidget {
   final int tvId;
@@ -45,6 +47,27 @@ class _TvPageState extends State<TvPage> {
     });
   }
 
+  Future<void> toggleSeason(int seasonNumber) async {
+    if (seasonDetails.containsKey(seasonNumber)) {
+      setState(() {
+        expandedSeasons.contains(seasonNumber)
+            ? expandedSeasons.remove(seasonNumber)
+            : expandedSeasons.add(seasonNumber);
+      });
+      return;
+    }
+
+    final seasonData =
+        await TMDbService.getSeasonDetails(widget.tvId, seasonNumber);
+
+    if (seasonData != null) {
+      setState(() {
+        seasonDetails[seasonNumber] = seasonData;
+        expandedSeasons.add(seasonNumber);
+      });
+    }
+  }
+
   Widget _buildHeader(TextTheme textTheme) {
     final genres = tv?['genres']?.map((g) => g['name'])?.join(', ') ?? '';
     final date = tv?['first_air_date']?.toString().substring(0, 4) ?? '';
@@ -72,10 +95,10 @@ class _TvPageState extends State<TvPage> {
               if (genres.isNotEmpty || date.isNotEmpty)
                 Text('$genres • $date', style: textTheme.bodyMedium),
               const SizedBox(height: 12),
-              Text(
-                tv?['overview'] ?? 'No overview available.',
-                textAlign: TextAlign.justify,
-                style: textTheme.bodyMedium,
+              ExpandableTextPreview(
+                title: 'Overview',
+                text: tv?['overview'] ?? 'No overview available.',
+                heroTag: 'tv_overview_${tv?['id']}',
               ),
             ],
           ),
@@ -105,7 +128,7 @@ class _TvPageState extends State<TvPage> {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => ActorPage(actorName: actor['name']),
+                    builder: (_) => ActorPage(actorId: actor['id']),
                   ),
                 ),
                 child: Column(
@@ -113,9 +136,12 @@ class _TvPageState extends State<TvPage> {
                     CircleAvatar(
                       radius: 40,
                       backgroundImage: actor['profile_path'] != null
-                          ? NetworkImage(TMDbService.getImageUrl(actor['profile_path']))
+                          ? NetworkImage(
+                              TMDbService.getImageUrl(actor['profile_path']))
                           : null,
-                      child: actor['profile_path'] == null ? const Icon(Icons.person) : null,
+                      child: actor['profile_path'] == null
+                          ? const Icon(Icons.person)
+                          : null,
                     ),
                     const SizedBox(height: 4),
                     SizedBox(
@@ -139,7 +165,8 @@ class _TvPageState extends State<TvPage> {
 
   Widget _buildTrailerButton(ColorScheme colorScheme) {
     final ytVideo = (videos?['results'] ?? [])
-        .firstWhere((v) => v['site'] == 'YouTube' && v['type'] == 'Trailer', orElse: () => null);
+        .firstWhere((v) => v['site'] == 'YouTube' && v['type'] == 'Trailer',
+            orElse: () => null);
     if (ytVideo == null) return const SizedBox();
 
     final url = 'https://www.youtube.com/watch?v=${ytVideo['key']}';
@@ -157,6 +184,59 @@ class _TvPageState extends State<TvPage> {
           },
         ),
       ),
+    );
+  }
+
+  Widget _buildSeasonList(TextTheme textTheme) {
+    final seasons = tv?['seasons'] ?? [];
+    if (seasons.isEmpty) return const SizedBox();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Seasons', style: textTheme.titleLarge),
+        const SizedBox(height: 12),
+        ...seasons.map<Widget>((season) {
+          final seasonNumber = season['season_number'];
+          final seasonName = season['name'];
+          final seasonPoster = season['poster_path'];
+          final isExpanded = expandedSeasons.contains(seasonNumber);
+          final seasonEpisodes =
+              seasonDetails[seasonNumber]?['episodes'] ?? [];
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(seasonName,
+                    style: textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold)),
+                trailing: Icon(
+                    isExpanded ? Icons.expand_less : Icons.expand_more),
+                onTap: () => toggleSeason(seasonNumber),
+              ),
+              if (isExpanded)
+                ...seasonEpisodes.map<Widget>((ep) {
+                  return ListTile(
+                    title: Text(
+                        'Episode ${ep['episode_number']}: ${ep['name'] ?? 'Untitled'}'),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EpisodePage(
+                          tvId: widget.tvId,
+                          seasonNumber: seasonNumber,
+                          episodeNumber: ep['episode_number'],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+            ],
+          );
+        }).toList(),
+      ],
     );
   }
 
@@ -230,7 +310,7 @@ class _TvPageState extends State<TvPage> {
     }
 
     return Scaffold(
-      appBar: const UnifiedAppBar(showMic: false),
+      appBar: const UnifiedAppBar(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -239,6 +319,9 @@ class _TvPageState extends State<TvPage> {
             _buildHeader(textTheme),
             _buildCastList(textTheme),
             _buildTrailerButton(colorScheme),
+            const SizedBox(height: 12),
+            _buildSeasonList(textTheme),
+            const SizedBox(height: 12),
             _buildSimilarShows(textTheme),
           ],
         ),

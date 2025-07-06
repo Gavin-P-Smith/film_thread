@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/tmdb_service.dart';
 import 'actor_page.dart';
 import '../widgets/unified_app_bar.dart';
+import '../widgets/expandable_text_preview.dart';
+import '../widgets/large_text_page.dart';
 
 class EpisodePage extends StatefulWidget {
   final int tvId;
@@ -71,12 +73,18 @@ class _EpisodePageState extends State<EpisodePage> {
         if (currentIndex > 0)
           TextButton.icon(
             icon: const Icon(Icons.arrow_back),
-            label: Text('Ep ${episodesInSeason[currentIndex - 1]['episode_number']}', style: textTheme.bodyMedium),
+            label: Text(
+              'Ep ${episodesInSeason[currentIndex - 1]['episode_number']}',
+              style: textTheme.bodyMedium,
+            ),
             onPressed: () => navigateToEpisode(episodesInSeason[currentIndex - 1]['episode_number']),
           ),
         if (currentIndex < episodesInSeason.length - 1)
           TextButton.icon(
-            icon: Text('Ep ${episodesInSeason[currentIndex + 1]['episode_number']}', style: textTheme.bodyMedium),
+            icon: Text(
+              'Ep ${episodesInSeason[currentIndex + 1]['episode_number']}',
+              style: textTheme.bodyMedium,
+            ),
             label: const Icon(Icons.arrow_forward),
             onPressed: () => navigateToEpisode(episodesInSeason[currentIndex + 1]['episode_number']),
           ),
@@ -150,10 +158,10 @@ class _EpisodePageState extends State<EpisodePage> {
           ),
         const SizedBox(width: 16),
         Expanded(
-          child: Text(
-            (overview != null && overview.isNotEmpty) ? overview : 'No overview available.',
-            style: textTheme.bodyMedium,
-            textAlign: TextAlign.justify,
+          child: ExpandableTextPreview(
+            title: 'Episode Overview',
+            text: (overview != null && overview.isNotEmpty) ? overview : 'No overview available.',
+            heroTag: 'episode_overview_${widget.tvId}_${widget.seasonNumber}_${widget.episodeNumber}',
           ),
         ),
       ],
@@ -183,7 +191,7 @@ class _EpisodePageState extends State<EpisodePage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => ActorPage(actorName: actor['name']),
+                      builder: (_) => ActorPage(actorId: actor['id']),
                     ),
                   );
                 },
@@ -225,7 +233,7 @@ class _EpisodePageState extends State<EpisodePage> {
     }
 
     return Scaffold(
-      appBar: const UnifiedAppBar(showMic: false),
+      appBar: const UnifiedAppBar(), // ✅ Mic now included consistently
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

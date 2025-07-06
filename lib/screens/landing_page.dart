@@ -14,12 +14,9 @@ class LandingPage extends StatefulWidget {
 
 class _LandingPageState extends State<LandingPage> {
   bool testTv = true;
-  String searchQuery = '';
-  List<dynamic> searchResults = [];
-  bool isSearching = false;
-  Timer? _debounce;
   List<Map<String, String>> news = [];
   bool loadingNews = true;
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -33,17 +30,6 @@ class _LandingPageState extends State<LandingPage> {
       news = items;
       loadingNews = false;
     });
-  }
-
-  void _onMicPressed() {
-    final mediaType = testTv ? 'tv' : 'movie';
-    final mediaId = testTv ? 1399 : 24428;
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => MediaPage(id: mediaId, mediaType: mediaType),
-      ),
-    );
   }
 
   Widget _buildNewsSection(TextTheme textTheme, ColorScheme colorScheme) {
@@ -178,8 +164,9 @@ class _LandingPageState extends State<LandingPage> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      appBar: UnifiedAppBar(onMicPressed: _onMicPressed),
+      appBar: const UnifiedAppBar(), // ✅ Mic consistently shown here too
       body: ListView(
         padding: const EdgeInsets.only(bottom: 24),
         children: [

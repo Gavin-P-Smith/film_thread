@@ -1,9 +1,11 @@
-// lib/screens/movie_page.dart
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../services/tmdb_service.dart';
 import 'actor_page.dart';
 import '../widgets/unified_app_bar.dart';
+import '../widgets/expandable_text_preview.dart';
+import '../widgets/large_text_page.dart';
 
 class MoviePage extends StatefulWidget {
   final int movieId;
@@ -167,7 +169,11 @@ class _MoviePageState extends State<MoviePage> {
               ],
             ),
             const SizedBox(height: 16),
-            Text(movie!['overview'] ?? 'No summary available.', style: textTheme.bodyLarge, textAlign: TextAlign.justify),
+            ExpandableTextPreview(
+              title: 'Overview',
+              text: movie!['overview'] ?? 'No summary available.',
+              heroTag: 'movie_overview_${movie!['id']}',
+            ),
             const SizedBox(height: 20),
             buildCrewList('Director'),
             buildCrewList('Writer'),
@@ -187,7 +193,9 @@ class _MoviePageState extends State<MoviePage> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => ActorPage(actorName: actor['name'])),
+                        MaterialPageRoute(
+                          builder: (_) => ActorPage(actorId: actor['id']),
+                        ),
                       );
                     },
                     child: Column(

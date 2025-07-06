@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import '../services/tmdb_service.dart';
 import 'media_page.dart';
 import '../widgets/unified_app_bar.dart';
+import '../widgets/expandable_text_preview.dart';
+import '../widgets/large_text_page.dart';
 
 class ActorPage extends StatefulWidget {
-  final String actorName;
-  const ActorPage({super.key, required this.actorName});
+  final int actorId;
+
+  const ActorPage({super.key, required this.actorId});
 
   @override
   State<ActorPage> createState() => _ActorPageState();
@@ -17,7 +20,6 @@ class _ActorPageState extends State<ActorPage> {
   Map<String, List<dynamic>> groupedByDecade = {};
   Set<String> expandedDecades = {};
   bool isLoading = true;
-  bool isBioExpanded = false;
 
   @override
   void initState() {
@@ -26,16 +28,9 @@ class _ActorPageState extends State<ActorPage> {
   }
 
   Future<void> fetchActor() async {
-    final result = await TMDbService.searchActorByName(widget.actorName);
-    if (result == null) {
-      setState(() => isLoading = false);
-      return;
-    }
-
-    final personId = result['id'];
-    final details = await TMDbService.getActorDetails(personId);
-    final movieCredits = await TMDbService.getFilmography(personId);
-    final tvCredits = await TMDbService.getTvFilmography(personId);
+    final details = await TMDbService.getActorDetails(widget.actorId);
+    final movieCredits = await TMDbService.getFilmography(widget.actorId);
+    final tvCredits = await TMDbService.getTvFilmography(widget.actorId);
 
     for (var m in movieCredits) {
       m['media_type'] = 'movie';
@@ -45,7 +40,8 @@ class _ActorPageState extends State<ActorPage> {
     }
 
     final combined = [...movieCredits, ...tvCredits]
-      ..sort((a, b) => (b['release_date'] ?? b['first_air_date'] ?? '').compareTo(a['release_date'] ?? a['first_air_date'] ?? ''));
+      ..sort((a, b) => (b['release_date'] ?? b['first_air_date'] ?? '')
+          .compareTo(a['release_date'] ?? a['first_air_date'] ?? ''));
 
     groupedByDecade = _groupByDecade(combined);
     if (groupedByDecade.isNotEmpty) {
@@ -97,38 +93,18 @@ class _ActorPageState extends State<ActorPage> {
               if (actorData?['birthday'] != null)
                 Text('Born: ${actorData!['birthday']}', style: textTheme.bodyMedium),
               if (actorData?['place_of_birth'] != null)
-                Text(actorData!['place_of_birth'], style: textTheme.bodySmall?.copyWith(color: Colors.grey)),
+                Text(actorData!['place_of_birth'],
+                    style: textTheme.bodySmall?.copyWith(color: Colors.grey)),
               const SizedBox(height: 8),
-              _buildBiography(textTheme)
+              ExpandableTextPreview(
+                title: 'Biography',
+                text: actorData?['biography'] ?? 'No biography available.',
+                heroTag: 'actor_bio_${actorData?['id'] ?? actorData?['name']}',
+              ),
             ],
           ),
         )
       ],
-    );
-  }
-
-  Widget _buildBiography(TextTheme textTheme) {
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            actorData?['biography'] ?? 'No biography available.',
-            style: textTheme.bodyMedium,
-            maxLines: isBioExpanded ? null : 4,
-            overflow: isBioExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Center(
-            child: IconButton(
-              icon: Icon(isBioExpanded ? Icons.expand_less : Icons.expand_more),
-              onPressed: () => setState(() => isBioExpanded = !isBioExpanded),
-            ),
-          )
-        ],
-      ),
     );
   }
 
@@ -143,7 +119,8 @@ class _ActorPageState extends State<ActorPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ListTile(
-              title: Text(decade, style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              title: Text(decade,
+                  style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
               trailing: Icon(isExpanded ? Icons.expand_less : Icons.expand_more),
               onTap: () {
                 setState(() {
@@ -161,7 +138,9 @@ class _ActorPageState extends State<ActorPage> {
                         : const Icon(Icons.movie),
                     title: Text(item['title'] ?? item['name'], style: textTheme.bodyLarge),
                     subtitle: Text(
-                      (item['release_date'] ?? item['first_air_date'] ?? '').toString().substring(0, 4),
+                      (item['release_date'] ?? item['first_air_date'] ?? '')
+                          .toString()
+                          .substring(0, 4),
                       style: textTheme.bodySmall,
                     ),
                     onTap: () {
@@ -191,7 +170,7 @@ class _ActorPageState extends State<ActorPage> {
     }
 
     return Scaffold(
-      appBar: const UnifiedAppBar(showMic: false),
+      appBar: const UnifiedAppBar(), // ✅ Ensure mic is always visible
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

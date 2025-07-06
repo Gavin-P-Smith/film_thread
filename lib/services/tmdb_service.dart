@@ -5,38 +5,69 @@ class TMDbService {
   static const String _apiKey = '38f9ac0f23b36b7c64990e9711335610';
   static const String _baseUrl = 'https://api.themoviedb.org/3';
 
-  static Future<Map<String, dynamic>?> getTvDetails(int tvId) async {
-  final url = Uri.parse('$_baseUrl/tv/$tvId?api_key=$_apiKey');
-  return _getJson(url);
-}
+  // --- Search Methods ---
+  static Future<List<dynamic>> searchAll(String query) async {
+    final encoded = Uri.encodeQueryComponent(query);
+    final url = Uri.parse('$_baseUrl/search/multi?api_key=$_apiKey&query=$encoded');
+    final data = await _getJson(url);
+    return data?['results'] ?? [];
+  }
 
-static Future<Map<String, dynamic>?> getEpisodeDetails({
-  required int tvId,
-  required int seasonNumber,
-  required int episodeNumber,
-}) async {
-  final url = Uri.parse(
-    '$_baseUrl/tv/$tvId/season/$seasonNumber/episode/$episodeNumber?api_key=$_apiKey',
-  );
-  return _getJson(url);
-}
-static Future<List<dynamic>> searchMulti(String query) async {
-  final encoded = Uri.encodeQueryComponent(query);
-  final url = Uri.parse('$_baseUrl/search/multi?api_key=$_apiKey&query=$encoded');
-  final data = await _getJson(url);
-  return data?['results'] ?? [];
-}
-static Future<Map<String, dynamic>?> getTvCredits(int tvId) async {
-  final url = Uri.parse('$_baseUrl/tv/$tvId/credits?api_key=$_apiKey');
-  return _getJson(url);
-}
+  static Future<List<dynamic>> searchMovies(String query) async {
+    final encoded = Uri.encodeQueryComponent(query);
+    final url = Uri.parse('$_baseUrl/search/movie?api_key=$_apiKey&query=$encoded');
+    final data = await _getJson(url);
+    return data?['results'] ?? [];
+  }
+
+  static Future<List<dynamic>> searchTV(String query) async {
+    final encoded = Uri.encodeQueryComponent(query);
+    final url = Uri.parse('$_baseUrl/search/tv?api_key=$_apiKey&query=$encoded');
+    final data = await _getJson(url);
+    return data?['results'] ?? [];
+  }
+
+  static Future<List<dynamic>> searchPeople(String query) async {
+    final encoded = Uri.encodeQueryComponent(query);
+    final url = Uri.parse('$_baseUrl/search/person?api_key=$_apiKey&query=$encoded');
+    final data = await _getJson(url);
+    return data?['results'] ?? [];
+  }
+
+  // --- TV Show Methods ---
+  static Future<Map<String, dynamic>?> getTvDetails(int tvId) async {
+    final url = Uri.parse('$_baseUrl/tv/$tvId?api_key=$_apiKey');
+    return _getJson(url);
+  }
+
+  static Future<Map<String, dynamic>?> getSeasonDetails(int tvId, int seasonNumber) async {
+    final url = Uri.parse('$_baseUrl/tv/$tvId/season/$seasonNumber?api_key=$_apiKey');
+    return _getJson(url);
+  }
+
+  static Future<Map<String, dynamic>?> getEpisodeDetails({
+    required int tvId,
+    required int seasonNumber,
+    required int episodeNumber,
+  }) async {
+    final url = Uri.parse(
+      '$_baseUrl/tv/$tvId/season/$seasonNumber/episode/$episodeNumber?api_key=$_apiKey',
+    );
+    return _getJson(url);
+  }
+
+  static Future<Map<String, dynamic>?> getTvCredits(int tvId) async {
+    final url = Uri.parse('$_baseUrl/tv/$tvId/credits?api_key=$_apiKey');
+    return _getJson(url);
+  }
 
   static Future<List<dynamic>> getTvFilmography(int personId) async {
-  final url = Uri.parse('$_baseUrl/person/$personId/tv_credits?api_key=$_apiKey');
-  final data = await _getJson(url);
-  return data?['cast'] ?? [];
-}
+    final url = Uri.parse('$_baseUrl/person/$personId/tv_credits?api_key=$_apiKey');
+    final data = await _getJson(url);
+    return data?['cast'] ?? [];
+  }
 
+  // --- Movie Methods ---
   static Future<Map<String, dynamic>?> getMovieDetails(int movieId) async {
     final url = Uri.parse('$_baseUrl/movie/$movieId?api_key=$_apiKey');
     return _getJson(url);
@@ -67,6 +98,13 @@ static Future<Map<String, dynamic>?> getTvCredits(int tvId) async {
     return _getJson(url);
   }
 
+  static Future<List<dynamic>> getFilmography(int personId) async {
+    final url = Uri.parse('$_baseUrl/person/$personId/movie_credits?api_key=$_apiKey');
+    final data = await _getJson(url);
+    return data?['cast'] ?? [];
+  }
+
+  // --- Actor/Person Methods ---
   static Future<Map<String, dynamic>?> searchActorByName(String name) async {
     final encodedName = Uri.encodeQueryComponent(name);
     final url = Uri.parse('$_baseUrl/search/person?api_key=$_apiKey&query=$encodedName');
@@ -81,21 +119,12 @@ static Future<Map<String, dynamic>?> getTvCredits(int tvId) async {
     return _getJson(url);
   }
 
-  static Future<List<dynamic>> getFilmography(int personId) async {
-    final url = Uri.parse('$_baseUrl/person/$personId/movie_credits?api_key=$_apiKey');
-    final data = await _getJson(url);
-    return data?['cast'] ?? [];
-  }
-
+  // --- Image URL Helper ---
   static String getImageUrl(String path, {int size = 200}) {
     return 'https://image.tmdb.org/t/p/w$size$path';
   }
 
-  static Future<Map<String, dynamic>?> getSeasonDetails(int tvId, int seasonNumber) async {
-  final url = Uri.parse('$_baseUrl/tv/$tvId/season/$seasonNumber?api_key=$_apiKey');
-  return _getJson(url);
-}
-
+  // --- HTTP Helper ---
   static Future<Map<String, dynamic>?> _getJson(Uri url) async {
     try {
       final response = await http.get(url);
